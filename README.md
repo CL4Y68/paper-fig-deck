@@ -5,10 +5,16 @@
 
 ## 架构
 
-```
-论文.pdf ─┐
-          ├─► content.json（逐图 claim，按 content_rules.md 提炼）─► run_pipeline.py ─► PPTX + 逐页备注
-图表裁剪 ─┘       （本地，不入库）                        一条命令，9 步固化     尾部 VERIFY: slides==notes, overflow=0
+```mermaid
+flowchart LR
+  A[论文 PDF<br/>本地] -->|逐图提炼<br/>content_rules.md| C["content.json（本地，不入库）"]
+  A -->|extract_figures.py<br/>+ prep_images.py| B["images/（裁剪 JPEG ≤900KB）"]
+  C --> P["run_pipeline.py<br/>一条命令 · 9 步固化"]
+  B --> P
+  P --> D["PPTX + 逐页备注"]
+  D --> E{"VERIFY<br/>slides==notes · overflow=0"}
+  E -->|通过| F[交付<br/>关键页 CDP 截图亲眼看]
+  E -->|门禁 blocking>0<br/>修 content.json 重跑| P
 ```
 
 | 项 | 说明 |
