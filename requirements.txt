@@ -1,0 +1,9 @@
+# any venv with the requirements below (on the author's machine this is the ppt-master venv)
+PyMuPDF>=1.24          # PDF text layer + figure-crop rendering (pymupdf / fitz)
+python-pptx>=1.0      # PPTX export verification + test-deck building
+Pillow>=11.0          # image crops / JPEG / PNG QA scans
+lxml>=5.0             # DrawingML surgery in postproc
+pywin32               # PowerPoint COM rendering for measure_* capacity tests (Windows only)
+# Also required, not pip-installable here: the ppt-master skill scripts
+# (svg_quality_checker / svg_to_pptx / compact_* / total_md_split /
+# stamp_native_fallbacks / project_manager) and a local PowerPoint install.

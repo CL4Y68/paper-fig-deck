@@ -1,0 +1,30 @@
+# python scratch / caches
+__pycache__/
+*.pyc
+
+# QA render outputs & browser profiles (regenerable)
+pilot/qa*/
+edge_profile*/
+
+# local Pillow shim (install per README)
+pillow_shim/
+
+# regenerable pipeline artifacts
+pilot/images/
+pilot/contact_sheet_*.png
+pilot/text_*.txt
+
+# PowerPoint lock files & delivery PPTX (never commit — contain source figure crops + quote excerpts)
+~$*
+output/*.pptx
+
+# literature files (copyright) - never commit source PDFs or extracted full texts
+*.pdf
+
+# derived decks embed literature fragments - keep deliveries local only
+*.pptx
+
+
+# paper data files (copyright) - keep local only
+pilot/*.json
+
