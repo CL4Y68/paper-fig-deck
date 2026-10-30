@@ -76,11 +76,15 @@ flowchart LR
 
 ## 致谢（开源依赖）
 
-- **PPT Master** — AI generates native PowerPoint from any document.
-  Native shapes, transitions, data-backed charts/tables, audio narration
-  from speaker notes. Upstream:
-  [github.com/hugohe3/ppt-master](https://github.com/hugohe3/ppt-master) —
-  © Hugo He · **MIT License**. This pipeline reuses its export/gate toolchain
-  (`svg_to_pptx`, `svg_quality_checker`, `compact_*`, `total_md_split`,
-  `stamp_native_fallbacks`). See `pipeline/README.md` for details. The installed
-  copy is used under its own license (see its LICENSE).
+本流水线以 **PPT Master**（[hugohe3/ppt-master](https://github.com/hugohe3/ppt-master)，作者 Hugo He，
+MIT License）为推荐后端：
+
+> PPT Master — AI generates native PowerPoint from any document. Native shapes,
+> transitions, data-backed charts/tables, audio narration from speaker notes.
+> © Hugo He · [MIT License](https://opensource.org/licenses/MIT) ·
+> [https://github.com/hugohe3/ppt-master](https://github.com/hugohe3/ppt-master)
+
+`kit.py` 的文本宽度估算与 `run_pipeline.py` 的导出/门禁/备注步骤复用了该项目的
+`scripts/`（svg_to_pptx、svg_quality_checker、compact_*、total_md_split、stamp_native_fallbacks）。
+MIT License 允许再分发，本仓库在此保留其归属声明；`PPTMASTER_DIR` / `SKILL_SCRIPTS_DIR`
+指向的本地安装不属于本仓库，按其自身 LICENSE 使用。
