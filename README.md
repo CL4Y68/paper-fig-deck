@@ -76,6 +76,11 @@ flowchart LR
 
 ## 致谢（开源依赖）
 
-PPT Master — Hugo He (hugohe3) · [MIT](https://opensource.org/licenses/MIT) ·
-[github.com/hugohe3/ppt-master](https://github.com/hugohe3/ppt-master)
-（本流水线复用其 SVG→PPTX 导出、质量门禁与辅助脚本；本地安装按其自身 LICENSE 使用）
+- **PPT Master** — AI generates native PowerPoint from any document.
+  Native shapes, transitions, data-backed charts/tables, audio narration
+  from speaker notes. Upstream:
+  [github.com/hugohe3/ppt-master](https://github.com/hugohe3/ppt-master) —
+  © Hugo He · **MIT License**. This pipeline reuses its export/gate toolchain
+  (`svg_to_pptx`, `svg_quality_checker`, `compact_*`, `total_md_split`,
+  `stamp_native_fallbacks`). See `pipeline/README.md` for details. The installed
+  copy is used under its own license (see its LICENSE).
