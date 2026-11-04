@@ -3,6 +3,10 @@
 科学论文 PDF → **逐图精讲 PPTX**：左原图 + 右大段正文（≥18pt、首行缩进 + 两端对齐）、
 页底原文引用条 + 逐页演讲者备注。自学与组会汇报两用。后端 PPT 工具链**不限定**，推荐 PPT Master。
 
+> **想先看文档？** [使用手册](docs/index.html)（单文件 HTML，可离线打开）·
+> [在线阅读 ↗](https://cl4y68.github.io/paper-fig-deck/)（GitHub Pages）
+> —— 含 11 步流水线、content.json 字段表、版面契约、校验器分级、排错手册。
+
 ## Quickstart（新机器 / 新 agent）
 
 ```bash

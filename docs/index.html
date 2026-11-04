@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>paper-fig-deck · 文献逐图精讲 PPTX 流水线 · 使用手册</title>
+<style>
+@page { size: A4; margin: 15mm 14mm; }
+* { box-sizing: border-box; }
+body { font-family: "Segoe UI","Microsoft YaHei","PingFang SC",sans-serif; color:#22303f; font-size:10pt; line-height:1.62; margin:0 auto; max-width:940px; padding:28px 22px 60px; }
+h1 { font-size:21pt; margin:0 0 3pt; color:#14233d; letter-spacing:.5px; }
+h2 { font-size:14pt; color:#14233d; margin:20pt 0 7pt; padding-bottom:5px; border-bottom:2px solid #dfe6f0; scroll-margin-top:16px; }
+h2 .n { display:inline-block; font-size:8pt; font-weight:700; color:#fff; background:#14233d; border-radius:4px; padding:2px 8px; margin-right:8px; vertical-align:middle; }
+h2.ok { border-bottom-color:#0e7c66; } h2.ok .n { background:#0e7c66; }
+h2.warn { border-bottom-color:#b45309; } h2.warn .n { background:#b45309; }
+h3 { font-size:11.5pt; color:#2b3f5c; margin:12pt 0 4pt; }
+p { margin:4.5pt 0; text-align:justify; }
+a { color:#2f5cae; text-decoration:none; } a:hover { text-decoration:underline; }
+ul, ol { margin:5pt 0; padding-left:19pt; } li { margin:2.5pt 0; }
+.subtitle { color:#5a6b82; font-size:9.5pt; margin-bottom:5pt; }
+.lead { font-size:10pt; color:#3a4a5f; }
+.tagline { display:inline-block; font-size:8pt; color:#5a6b82; border:1px solid #dbe4f0; border-radius:10px; padding:2px 9px; margin:0 4px 3px 0; }
+
+.toc { background:#f7f9fc; border:1px solid #dbe4f0; border-radius:8px; padding:11px 16px; margin:12pt 0 6pt; font-size:9pt; }
+.toc b { color:#14233d; font-size:9.5pt; }
+.toc ol { columns:2; column-gap:26px; margin:5pt 0 0; padding-left:16pt; }
+
+.note { background:#f5f8fc; border-left:3px solid #4a72c4; border-radius:0 5px 5px 0; padding:7px 11px; margin:8pt 0; font-size:9pt; }
+.note.ok { border-left-color:#0e7c66; background:#eef7f4; }
+.note.warn { border-left-color:#b45309; background:#fdf4ec; }
+.note b:first-child { color:#14233d; }
+
+pre { background:#0f1729; color:#cdd8ee; font-size:8pt; line-height:1.6; padding:11px 14px; border-radius:6px; white-space:pre-wrap; word-break:break-word; margin:7pt 0; font-family:"Cascadia Code","JetBrains Mono",Consolas,monospace; }
+pre .c { color:#6f8bc0; } pre .g { color:#5fd0a5; } pre .o { color:#f0b866; } pre .k { color:#7aa5ff; }
+code { font-family:"Cascadia Code",Consolas,monospace; background:#eef2f8; color:#274060; padding:1px 5px; border-radius:3px; font-size:8.6pt; }
+
+table { border-collapse:collapse; width:100%; margin:7pt 0; font-size:8.8pt; }
+th { color:#fff; padding:6px 9px; text-align:left; font-weight:600; font-size:8.4pt; }
+tr.t th { background:#14233d; } tr.g th { background:#0e7c66; } tr.o th { background:#b45309; }
+td { border:1px solid #dbe4f0; padding:6px 9px; vertical-align:top; }
+tbody tr:nth-child(even) td { background:#f7fafd; }
+td .k { font-weight:700; color:#14233d; }
+td.mono { font-family:"Cascadia Code",Consolas,monospace; font-size:8.2pt; color:#274060; }
+
+.kpi { display:flex; gap:9px; margin:11pt 0; flex-wrap:wrap; }
+.kpi > div { flex:1 1 150px; border:1px solid #dbe4f0; border-radius:8px; padding:9px 11px; background:#fbfcfe; }
+.kpi .n { font-size:17pt; font-weight:700; line-height:1; color:#14233d; }
+.kpi .l { font-size:7.9pt; color:#5a6b82; margin-top:4px; line-height:1.35; }
+.kpi .g .n { color:#0e7c66; } .kpi .o .n { color:#b45309; }
+
+.strip { display:flex; gap:0; margin:10pt 0; border-radius:8px; overflow:hidden; border:1px solid #dbe4f0; flex-wrap:wrap; }
+.strip > div { flex:1 1 260px; padding:9px 13px; }
+.strip .g { background:#eef7f4; } .strip .o { background:#fdf4ec; }
+.strip h4 { margin:0 0 3px; font-size:10.5pt; }
+.strip .g h4 { color:#0a5c4d; } .strip .o h4 { color:#8a3d05; }
+.strip p { font-size:8.3pt; margin:0; color:#4a5a70; }
+
+.svgbox { margin:12pt 0; text-align:center; }
+.svgbox .cap { font-size:8pt; color:#5a6b82; margin-top:5px; }
+.diagram { max-width:100%; height:auto; }
+
+.flow { font-family:"Cascadia Code",Consolas,monospace; font-size:8.3pt; background:#f7f9fc; border:1px solid #dbe4f0; border-radius:7px; padding:9px 12px; margin:8pt 0; color:#274060; line-height:1.9; }
+.flow b { color:#0e7c66; }
+
+footer { font-size:7.6pt; color:#8494ad; margin-top:22pt; border-top:1px solid #dbe4f0; padding-top:7pt; }
+.small { font-size:8pt; color:#74829a; }
+.pagebreak { page-break-before:always; }
+@media print { .toc { break-inside:avoid; } h2 { break-after:avoid; } table, pre, .note, .strip, .svgbox { break-inside:avoid; } }
+</style>
+</head>
+<body>
+
+<h1>paper-fig-deck · 文献逐图精讲 PPTX 流水线 · 使用手册</h1>
+<div class="subtitle">从一篇论文 PDF 到「左图 + 右大段正文 + 原文引用条 + 逐页讲稿」的可编辑 PPTX</div>
+<div>
+<span class="tagline">schema_version 2</span>
+<span class="tagline">版面 1280×720 · 正文 ≥24px（18pt）</span>
+<span class="tagline">后端 PPT Master（MIT）· 可替换</span>
+<span class="tagline">78 项测试 · CI 3.10/3.11/3.12</span>
+</div>
+
+<p class="lead">本手册面向「要用它出片」的人和「要维护它」的人，各占一半篇幅。
+它回答三个问题：<b>怎么最快跑通一次</b>、<b>每一页的文字该长什么样</b>、<b>出问题该看哪里</b>。
+所有命令、数值和输出都是在本仓库当前版本上真实执行过的，不是示意。</p>
+
+<div class="toc">
+<b>目录</b>
+<ol>
+<li><a href="#what">它做什么 / 不做什么</a></li>
+<li><a href="#quick">五分钟上手</a></li>
+<li><a href="#pipeline">一次构建的 11 个步骤</a></li>
+<li><a href="#content">content.json 字段参考</a></li>
+<li><a href="#layout">版面契约</a></li>
+<li><a href="#validate">校验器：error 与 warning</a></li>
+<li><a href="#verify">验收与质量保障</a></li>
+<li><a href="#trouble">排错手册</a></li>
+<li><a href="#backend">换一个后端</a></li>
+<li><a href="#copyright">版权红线</a></li>
+<li><a href="#credits">致谢</a></li>
+</ol>
+</div>
+
+<h2 id="what"><span class="n">01</span>它做什么 / 不做什么</h2>
+
+<p>输入一篇论文（PDF + 你自己写的 <code>content.json</code>），输出一份逐图讲解的 PPTX：
+每一页左边是论文原图，右边是一大段中文解读，底部一条原文引用，讲稿在备注里。
+适合<b>自学精读</b>和<b>组会汇报</b>，不适合当海报或答辩模板（那是别的版式）。</p>
+
+<div class="strip">
+<div class="g"><h4>它保证什么</h4><p>每页正文不溢出、不压线、不超面板；字号不低于 18pt；页数与讲稿数严格 1:1；原生表格可编辑；成品 PPTX 落盘后再做一次结构审计。</p></div>
+<div class="o"><h4>它不保证什么</h4><p>内容对不对。提炼是否准确、数字是否与原文一致、论证是否成立，全部由作者负责——流水线只保证「按你给的内容排版正确」。</p></div>
+</div>
+
+<div class="svgbox">
+<svg class="diagram" viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Microsoft YaHei,sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#14233d"/></marker>
+    <marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#b45309"/></marker>
+  </defs>
+
+  <rect x="8" y="20" width="150" height="96" rx="10" fill="#f5f8fc" stroke="#4a72c4" stroke-width="1.5"/>
+  <text x="22" y="44" font-size="12.5" font-weight="700" fill="#14233d">本地素材</text>
+  <text x="22" y="64" font-size="9" fill="#3a4a5f">论文.pdf（不提交）</text>
+  <text x="22" y="80" font-size="9" fill="#3a4a5f">images/ 或 figures.json</text>
+  <text x="22" y="96" font-size="9" fill="#3a4a5f">content.json（你的活）</text>
+
+  <rect x="196" y="20" width="150" height="96" rx="10" fill="#eef7f4" stroke="#0e7c66" stroke-width="1.5"/>
+  <text x="210" y="44" font-size="12.5" font-weight="700" fill="#0a5c4d">校验 + 生成</text>
+  <text x="210" y="64" font-size="9" fill="#0a5c4d">content_schema 第 0 步</text>
+  <text x="210" y="80" font-size="9" fill="#0a5c4d">deck.py → 10 页 SVG</text>
+  <text x="210" y="96" font-size="9" fill="#0a5c4d">gen_notes → total.md</text>
+
+  <rect x="384" y="20" width="150" height="96" rx="10" fill="#f5f8fc" stroke="#4a72c4" stroke-width="1.5"/>
+  <text x="398" y="44" font-size="12.5" font-weight="700" fill="#14233d">门禁（backend）</text>
+  <text x="398" y="64" font-size="9" fill="#3a4a5f">svg_quality_checker</text>
+  <text x="398" y="80" font-size="9" fill="#3a4a5f">blocking &gt; 0 即拒导出</text>
+  <text x="398" y="96" font-size="9" fill="#3a4a5f">报告落 validation/</text>
+
+  <rect x="572" y="20" width="180" height="96" rx="10" fill="#fdf4ec" stroke="#b45309" stroke-width="1.5"/>
+  <text x="586" y="44" font-size="12.5" font-weight="700" fill="#8a3d05">导出 + 加固</text>
+  <text x="586" y="64" font-size="9" fill="#3a4a5f">svg_to_pptx（原生表）</text>
+  <text x="586" y="80" font-size="9" fill="#3a4a5f">postproc：两端对齐</text>
+  <text x="586" y="96" font-size="9" fill="#3a4a5f">+ 首行缩进 + 框宽还原</text>
+
+  <line x1="158" y1="68" x2="192" y2="68" stroke="#14233d" stroke-width="1.8" marker-end="url(#ar)"/>
+  <line x1="346" y1="68" x2="380" y2="68" stroke="#14233d" stroke-width="1.8" marker-end="url(#ar)"/>
+  <line x1="534" y1="68" x2="568" y2="68" stroke="#14233d" stroke-width="1.8" marker-end="url(#ar)"/>
+
+  <rect x="384" y="160" width="368" height="56" rx="9" fill="#eef7f4" stroke="#0e7c66" stroke-width="1.5"/>
+  <text x="398" y="182" font-size="11.5" font-weight="700" fill="#0a5c4d">VERIFY　slides=10　notes=10　overflow=0　native_tbl=1</text>
+  <text x="398" y="200" font-size="8.6" fill="#3a4a5f">页数 = 讲稿数、零越界、原生表已落地 —— 三个断言全部在 build 内完成</text>
+  <line x1="662" y1="118" x2="662" y2="156" stroke="#14233d" stroke-width="1.8" marker-end="url(#ar)"/>
+  <line x1="572" y1="188" x2="196" y2="188" stroke="#b45309" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+  <text x="384" y="182" font-size="8.6" fill="#8a3d05" text-anchor="end" dx="-6">门禁拦下 → 改 content.json 重跑</text>
+
+  <text x="380" y="240" font-size="9.6" font-weight="700" fill="#14233d" text-anchor="middle">排版正确性由门禁保证，内容正确性由你保证</text>
+</svg>
+<div class="cap">图 1 · 一条命令把「素材 → 校验 → 生成 → 门禁 → 导出 → 自检」串起来，任一步失败都会停下并指出位置</div>
+</div>
+
+<div class="kpi">
+<div><div class="n">11</div><div class="l">步骤固化在 run_pipeline.py（含第 0 步校验）</div></div>
+<div class="g"><div class="n">14</div><div class="l">正文行数上限（实测，非估计）</div></div>
+<div class="o"><div class="n">18pt</div><div class="l">全片字号下限（= SVG 24px）</div></div>
+<div><div class="n">78</div><div class="l">自动化测试项（含正反例）</div></div>
+</div>
+
+<h2 id="quick"><span class="n">02</span>五分钟上手</h2>
+
+<p>先装环境，再用仓库自带的<b>合成样例</b>跑一遍。样例是一篇虚构论文（虚构材料代号、虚构期刊与 DOI、脚本画的图），
+专门用来验证链路，不碰任何真实文献。</p>
+
+<pre><span class="c"># 1. 项目与依赖（任意 Python ≥3.10 venv）</span>
+git clone &lt;本仓库&gt; &amp;&amp; cd paper-fig-deck
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt      <span class="c"># Linux/macOS: .venv/bin/pip</span>
+
+<span class="c"># 2. 后端：ppt-master（MIT）。放任意位置都行</span>
+git clone https://github.com/hugohe3/ppt-master /path/to/ppt-master
+export PPTMASTER_DIR=/path/to/ppt-master           <span class="c"># Windows: setx PPTMASTER_DIR ...</span>
+
+<span class="c"># 3. 自检：缺什么、怎么补，一次说清</span>
+python pipeline/doctor.py
+
+<span class="c"># 4. 冒烟测试：不需要 ppt-master，只验内容与生成器</span>
+python pipeline/run_pipeline.py sample --dry-run
+
+<span class="c"># 5. 完整链路：门禁 → 导出 → 后处理 → 校验</span>
+python pipeline/run_pipeline.py sample --name demo</pre>
+
+<p>第 5 步成功时，尾部一定长这样（数字会随内容变，<b>三个断言</b>不会变）：</p>
+
+<pre>[5/9] gate clean (blocking=0, warnings=3)
+[7/9] post-processed -&gt; output\demo_逐图精讲.pptx
+<span class="g">[8/9] VERIFY slides=10 notes=10 overflow=0 native_tbl=1 media=3</span>
+[9/9] delivery -&gt; output\demo_逐图精讲.pptx</pre>
+
+<div class="note ok"><b>跑通了就把 sample/ 换成自己的 workdir。</b>
+每篇论文只有三步：填 <code>content.json</code> → 跑一条命令 → 看 VERIFY。
+样例的 <code>content.json</code> 就是填空模板：两个图页（其中一个正文长到会自动拆「续页」）+ 一个表页。</div>
+
+<div class="note warn"><b>--dry-run 的产物不可交付。</b>
+它用的是<b>近似</b>宽度模型（CJK 1.10em / Latin 0.62em），只用来证明「内容与生成器对得上」。
+正规生成会强制要求真实后端，否则直接报错 —— 这是刻意的：按错的模型排出来的版面，在 PowerPoint 里会溢出。</div>
+
+<h2 id="pipeline"><span class="n">03</span>一次构建的 11 个步骤</h2>
+
+<p><code>run_pipeline.py</code> 把顺序坑固化成一条命令。你只需要知道「哪一步会停、停了改什么」。</p>
+
+<table class="t">
+<tr><th style="width:52px">步</th><th style="width:132px">动作</th><th>做什么 / 为什么必须在这个位置</th></tr>
+<tr><td class="mono">0</td><td><span class="k">校验</span></td><td><code>content_schema.validate()</code>：字段缺失、类型错、表格行列不匹配、行数超版面 —— 报出精确路径，在写任何文件之前就停。</td></tr>
+<tr><td class="mono">1</td><td><span class="k">项目</span></td><td>读 <code>content.json[paper][ppt_project]</code>；目录不在了就用 <code>project_manager.py init</code> 重建，并把新路径写回 content.json（从工具打印的 <code>Project created:</code> 行解析，不靠猜路径）。</td></tr>
+<tr><td class="mono">2</td><td><span class="k">清旧讲稿</span></td><td>删 <code>notes/*.md</code>。<b>必须在拆分之前</b>：<code>total_md_split.py</code> 的 1:1 检查会把上一次的残留算进去。</td></tr>
+<tr><td class="mono">2b</td><td><span class="k">图片入项目</span></td><td>有 <code>figures.json</code> 按图表编号压成 <code>figNN.jpg</code>；否则把 <code>images/</code> 里的 jpg/png 原样 stage 进 <code>&lt;project&gt;/images/</code>（≤2000px、≤900KB）。</td></tr>
+<tr><td class="mono">3</td><td><span class="k">生成</span></td><td><code>gen_all</code>（SVG）→ <code>gen_notes</code>（讲稿）→ <code>total_md_split</code> → compact 样式 → compact 坐标。</td></tr>
+<tr><td class="mono">4</td><td><span class="k">原生表标记</span></td><td>只对含 <code>kind:"table"</code> 的稿子：<code>stamp_native_fallbacks --write</code>，<b>必须在 compact 之后、门禁之前</b>（compact 会重写 SVG，SHA 会失效）。</td></tr>
+<tr><td class="mono">5</td><td><span class="k">门禁</span></td><td><code>svg_quality_checker --stage final --json</code>；结论只认 <code>validation/svg_quality_report.json</code>，不看 stdout。<code>blocking&gt;0</code> 直接拒绝导出。</td></tr>
+<tr><td class="mono">6</td><td><span class="k">导出</span></td><td><code>svg_to_pptx --quick-generate --with-notes --reflow-text</code>（有表再加 <code>--native-charts-and-tables</code>）。导出文件用 <code>ls -t exports/*.pptx</code> 取最新的，不解析 stdout（里面是反斜杠路径）。</td></tr>
+<tr><td class="mono">7</td><td><span class="k">后处理</span></td><td><code>postproc_justify</code>：把正文框宽还原成版面宽度、加 <code>algn="just"</code>、加 36pt 首行缩进 —— 这三件事 SVG 表达不了，只能在 PPTX 里做。</td></tr>
+<tr><td class="mono">8</td><td><span class="k">成品审计</span></td><td>页数 / 讲稿数 / 越界形状 / <code>&lt;a:tbl&gt;</code> 数 / 媒体数；三个断言不过就抛错。</td></tr>
+<tr><td class="mono">9</td><td><span class="k">交付</span></td><td>输出到 <code>&lt;workdir&gt;/../output/&lt;name&gt;_逐图精讲.pptx</code>；<code>--desktop-dir</code> 可再复制一份，文件被占用时只警告不失败。</td></tr>
+</table>
+
+<h3>常用开关</h3>
+<table class="g">
+<tr><th style="width:170px">开关</th><th>用途</th></tr>
+<tr><td class="mono">--name</td><td>交付文件名（默认取 workdir 名）</td></tr>
+<tr><td class="mono">--dry-run</td><td>只做校验 + SVG + 讲稿，用近似宽度模型写到 <code>&lt;workdir&gt;/.dryrun</code>；<b>不可交付</b></td></tr>
+<tr><td class="mono">--no-export</td><td>门禁通过就停 —— 反复改文案时最省时间</td></tr>
+<tr><td class="mono">--project-dir</td><td>覆盖 <code>paper.ppt_project</code>（多个 workdir 共用一个项目时用）</td></tr>
+<tr><td class="mono">--skip-validate</td><td>跳过第 0 步。只在调试生成器本身时用，正常不要碰</td></tr>
+<tr><td class="mono">--desktop-dir</td><td>额外复制一份到指定目录</td></tr>
+</table>
+
+<h2 id="content"><span class="n">04</span>content.json 字段参考</h2>
+
+<p>这是整套流程里<b>唯一需要你动脑</b>的文件。怎么写出「像作者的论证」而不是「像结果清单」，
+见 <code>pipeline/content_rules.md</code>；这里只讲字段怎么填、填错会怎样。</p>
+
+<table class="o">
+<tr><th style="width:150px">字段</th><th style="width:58px">必填</th><th>说明</th></tr>
+<tr><td class="mono">schema_version</td><td>建议</td><td>当前 <code>"2"</code>；缺省会当作 <code>"1"</code> 并给 warning</td></tr>
+<tr><td class="mono">paper.title_zh / journal /<br>authors_short / doi</td><td>是</td><td>封面与页脚用。做样例时也要给<b>虚构</b>值（公开仓库不能出现真实文献信息）</td></tr>
+<tr><td class="mono">paper.title_page_img</td><td>是</td><td>封面图文件名，须存在于项目 <code>images/</code></td></tr>
+<tr><td class="mono">paper.abstract_zh /<br>conclusion_zh</td><td>是</td><td>中文摘要与结论，各 ≤10 行（全宽 1184px）</td></tr>
+<tr><td class="mono">paper.intro_lines</td><td>否</td><td>五线分析：<code>[["背景与研究现状","…"], …]</code>，≤5 条，整页 ≤16 行</td></tr>
+<tr><td class="mono">paper.mainline</td><td>否</td><td>论证主线：<code>[["Fig 1","它证明了什么"], …]</code>，与 <code>figures</code> 顺序对齐；有它才生成总览页</td></tr>
+<tr><td class="mono">paper.methods_zh</td><td>否</td><td>制备方法整页（≤12 行）</td></tr>
+<tr><td class="mono">paper.message /<br>takeaway_good / if_rebuild</td><td>否</td><td>只进讲稿：三十秒读法、好在哪、若重做会怎么改</td></tr>
+<tr><td class="mono">paper.title_crop</td><td>否</td><td><code>{pdf, page, rect:[x0,y0,x1,y1], out, z}</code>，让 <code>prep_images</code> 从 PDF 直接裁封面</td></tr>
+<tr><td class="mono">figures[].kind</td><td>是</td><td><code>figure</code> / <code>scheme</code> / <code>table</code>（三种都会渲染；table 走左表右注）</td></tr>
+<tr><td class="mono">figures[].num / img</td><td>是 / 否</td><td>图号；<code>img</code> 缺省为 <code>figNN.jpg</code></td></tr>
+<tr><td class="mono">figures[].slides[]</td><td>是</td><td>图：<code>{reading_point, what, body, quote, quote_ref}</code>；表：<code>{reading_point, table_note, headers, table_rows, quote, quote_ref}</code></td></tr>
+<tr><td class="mono">figures[].arguing / critique</td><td>否</td><td>只进讲稿：【论证】这一步如何立论、【批判】证据强度与回避的问题</td></tr>
+</table>
+
+<div class="note"><b>正文怎么写：</b>一个 <code>body</code> 只讲一个读点。超过 14 行会自动拆成「（续）」页，但那是兜底，不是目标 ——
+拆页会打断阅读节奏。<code>reading_point</code> 是右面板标题，单行，中文超过 14 字会被截断（校验器会给 warning）。</div>
+
+<p>机器可读版本：<code>pipeline/schema/content.schema.json</code>（IDE 补全 / agent 自检都能用）。生成方式：</p>
+<pre>python pipeline/content_schema.py --write-json-schema pipeline/schema/content.schema.json</pre>
+
+<h2 id="layout"><span class="n">05</span>版面契约</h2>
+
+<p>所有几何数字集中在 <code>pipeline/layout.py</code> —— 生成器、后处理器、测试共用同一张表。
+改一处即全链路生效；在别处写字面量算 bug。</p>
+
+<table class="t">
+<tr><th style="width:150px">元素</th><th>参数（SVG px，画布 1280×720）</th></tr>
+<tr><td class="k">字号</td><td>全部 ≥24px（= 18pt）；标题 32px；页脚 24px</td></tr>
+<tr><td class="k">左图卡</td><td>(48,144) 568×496；图按 <code>meet</code> 落在 (64,160) 536×464</td></tr>
+<tr><td class="k">右面板</td><td>(640,144) 608×496；文字起点 x=668，换行宽 552</td></tr>
+<tr><td class="k">正文区</td><td>y212 → y548；实测 14 行封顶，行距按行数自适应（<code>min(36, 336/n)</code>）</td></tr>
+<tr><td class="k">原文条</td><td>y556 细分隔线 → y584 标签 → y616 引用（单行，超长截断，全文留在讲稿里）</td></tr>
+<tr><td class="k">表格页</td><td>表格 (48,160) 730 宽、行高 48、≤8 行；右注栏 x=828，宽 376</td></tr>
+<tr><td class="k">总览页</td><td>每行一个模块；≤9 行单栏（1184 宽），&gt;9 行双栏（560 宽）；标签列固定 132px，保证所有 claim 起点对齐</td></tr>
+<tr><td class="k">颜色</td><td>BLUE #1F3864 · GOLD #C9A227 · DARK #333333 · GRAY #595959 · LGRAY #8A8F98</td></tr>
+<tr><td class="k">字体</td><td>Times New Roman + 宋体（SVG 根节点声明，导出后写入 PPTX 主题的 latin/ea）</td></tr>
+</table>
+
+<div class="note warn"><b>14 行不是猜的。</b><code>measure_capacity.py</code> 用 PowerPoint COM 在真实导出几何里渲染 12/13/14/15 行的正文，
+再按像素扫描墨迹底边与 y556 细线：14 行墨迹止于约 552px，15 行到 584px（溢出）。
+换字体、改盒宽、改行距之后，<b>必须重跑 measure 并更新 layout.py</b>，不要凭感觉改数字。</div>
+
+<h2 id="validate"><span class="n">06</span>校验器：error 与 warning</h2>
+
+<p>第 0 步的校验把问题分成两类。这套分级是刻意的：<b>error 会让流水线停下，warning 不会</b>，
+但 warning 通常意味着「能建出来，但大概不是你想要的」。</p>
+
+<table class="o">
+<tr><th style="width:78px">级别</th><th style="width:210px">典型触发</th><th>为什么这样分级</th></tr>
+<tr><td class="k">error</td><td>必填字段缺失/空串 · <code>figures</code> 为空 · <code>kind</code> 不在三种之内 · 表格行列数不匹配 · 表格超过 8 行 · 列数 &gt;6 · <code>schema_version</code> 不支持</td><td>这些会让页面缺内容或直接崩，没有「先建出来看看」的余地</td></tr>
+<tr><td class="k">warning</td><td>正文 &gt;1400 字 · 引用 &gt;160 字 · 单元格 &gt;24 字 · 读点题名 &gt;14 字 · <code>mainline</code> 条数与 <code>figures</code> 不一致 · 缺 <code>schema_version</code></td><td>建得出，但会拆很多页 / 被截断 / 部分图拿不到主线注释</td></tr>
+</table>
+
+<pre><span class="c"># 单独跑校验（比整条流水线快得多）</span>
+python pipeline/content_schema.py &lt;workdir&gt;          <span class="c"># 退出码 1 = 有 error</span>
+python pipeline/content_schema.py &lt;workdir&gt; --json   <span class="c"># 机器可读，便于 agent 循环修</span>
+python pipeline/content_schema.py &lt;workdir&gt; --stage build   <span class="c"># 额外要求 ppt_project 已填</span></pre>
+
+<p>报错长这样，直接照路径改：</p>
+<pre><span class="o">[error] figures[2].slides[0].table_rows[2]: 3 cells for 4 columns</span>
+<span class="o">[error] paper.doi: required non-empty string</span>
+[warn]  figures[1].slides[0].reading_point: 18 chars; the panel title is one line and truncates around 14 CJK chars</pre>
+
+<h2 id="verify"><span class="n">07</span>验收与质量保障</h2>
+
+<p>五道闸门，各拦一类问题。除第三道外，其余都在本地可复现，不需要 PowerPoint。</p>
+
+<table class="g">
+<tr><th style="width:120px">层</th><th style="width:230px">手段</th><th>拦住什么</th></tr>
+<tr><td class="k">输入</td><td><code>content_schema.py</code></td><td>字段名错、缺必填、表格行列不匹配、行数超版面</td></tr>
+<tr><td class="k">版面</td><td><code>layout.py</code> + <code>tests/test_layout.py</code></td><td>模块重叠、图片超出卡片、字号掉到 18pt 以下</td></tr>
+<tr><td class="k">排版</td><td>复用后端的宽度估算器（与门禁同模型）</td><td>SVG 看着正常、PowerPoint 里却溢出的情况</td></tr>
+<tr><td class="k">门禁</td><td><code>svg_quality_checker</code>（blocking &gt; 0 拒导出）</td><td>越界、图文重叠、非法图片引用、未声明的字号</td></tr>
+<tr><td class="k">成品</td><td><code>verify_pptx()</code></td><td>slides ≠ notes、形状出界、原生表没落地</td></tr>
+</table>
+
+<h3>自己跑测试与静态检查</h3>
+<pre>pip install -r requirements-dev.txt
+ruff check . &amp;&amp; pytest                     <span class="c"># 本机：真实宽度模型</span>
+PAPER_FIG_DECK_NO_BACKEND=1 pytest          <span class="c"># 模拟没装 ppt-master 的机器</span></pre>
+
+<p>第二种模式很重要：CI 就是用它跑的。<code>PAPER_FIG_DECK_NO_BACKEND=1</code> 会强制走近似模型，
+保证「新机器 clone 下来什么都没装」这条路径永远可测 —— 否则本地有 ppt-master 就永远测不到它。</p>
+
+<h3>最后一关仍是眼睛</h3>
+<p>门禁证明坐标合法，不证明像素正确（中文字形比估算宽、<code>tspan</code> 续行可能叠字）。
+交付前至少亲眼看三类页：<b>总览页</b>（对齐）、<b>最长正文页</b>（是否压线）、<b>表格页</b>（列宽是否裁字）。
+做法：把 SVG 用本地 http 服务打开，或直接打开导出的 PPTX 翻一遍。</p>
+
+<h2 id="trouble"><span class="n">08</span>排错手册</h2>
+
+<table class="o">
+<tr><th style="width:250px">症状</th><th style="width:200px">原因</th><th>处理</th></tr>
+<tr><td class="mono">[error] … no ppt-master scripts/ dir found</td><td>后端没装或路径不对</td><td>设 <code>PPTMASTER_DIR</code>（指向含 <code>scripts/svg_quality_checker.py</code> 的目录），跑 <code>doctor.py</code> 看它找到了哪</td></tr>
+<tr><td class="mono">content.json has N error(s)</td><td>内容字段问题</td><td>按打印的字段路径改；<code>--json</code> 便于脚本处理</td></tr>
+<tr><td class="mono">BLOCKING: … External image not found</td><td>图片没进项目 <code>images/</code></td><td>确认 workdir 里有 <code>images/</code> 或 <code>figures.json</code>；驱动会自动 stage</td></tr>
+<tr><td class="mono">BLOCKING: … exceeds &lt;g id="panel"&gt;<br>… horizontal axis</td><td>单行文字比面板宽</td><td>缩短文案；读点题名已自动截断，正文靠行数上限控制</td></tr>
+<tr><td class="mono">notes/svg mismatch</td><td>讲稿与页面没 1:1</td><td>驱动会先删旧讲稿；手工跑时要自己清 <code>notes/*.md</code></td></tr>
+<tr><td class="mono">VERIFY … overflow&gt;0</td><td>PPTX 里有形状出界</td><td>多半是正文框宽被改过；检查 <code>page_roles.json</code> 与 <code>postproc_justify</code></td></tr>
+<tr><td class="mono">native tables requested but no &lt;a:tbl&gt;</td><td>导出时少了原生表开关</td><td>确认走 <code>run_pipeline.py</code>（它按内容自动加 <code>--native-charts-and-tables</code>）</td></tr>
+<tr><td class="mono">Linux 上 pip install 失败（pywin32）</td><td>旧版 requirements 没有平台标记</td><td>已修：<code>pywin32&gt;=306; sys_platform == "win32"</code></td></tr>
+<tr><td class="mono">导出的 PPT 字体变成了别的</td><td>本机没有 Times New Roman / 宋体</td><td>装字体；SVG 只声明字体名，渲染在 PowerPoint 侧</td></tr>
+</table>
+
+<div class="note"><b>改字之后：</b>重跑同一条命令即可。项目目录会复用，SVG 与讲稿全量重生成，
+不用担心残留页——第 2 步和第 3 步都会清。</div>
+
+<h2 id="backend"><span class="n">09</span>换一个后端</h2>
+
+<p>流水线本身只负责「产出 SVG + 讲稿 + 版面数据」，PPT 工具链是<b>可替换</b>的。
+需要满足五项能力，缺一不可：</p>
+
+<table class="g">
+<tr><th style="width:210px">能力</th><th>PPT Master（推荐）对应件</th></tr>
+<tr><td class="k">文本宽度估算</td><td><code>svg_to_pptx.drawingml…estimate_single_line_text_frame_width</code>（与门禁同模型）</td></tr>
+<tr><td class="k">SVG → PPTX</td><td><code>svg_to_pptx.py --quick-generate --with-notes --reflow-text [--native-charts-and-tables]</code></td></tr>
+<tr><td class="k">质量门禁</td><td><code>svg_quality_checker.py --json</code>（写 <code>validation/svg_quality_report.json</code>）</td></tr>
+<tr><td class="k">备注拆分</td><td><code>total_md_split.py</code>（与 SVG 1:1 校验）</td></tr>
+<tr><td class="k">原生表标记</td><td><code>stamp_native_fallbacks.py --write</code></td></tr>
+</table>
+
+<p>换工具链时只需要改两处：<code>kit.py</code> 的后端解析（<code>_resolve_estimator</code>）和
+<code>run_pipeline.py</code> 的步骤命令。路径通过 <code>PPTMASTER_DIR</code> / <code>SKILL_SCRIPTS_DIR</code> 注入，
+也可以靠自动发现（常见安装位置、Hermes profile 的 skills 目录）。</p>
+
+<h2 id="copyright"><span class="n">10</span>版权红线</h2>
+
+<ul>
+<li>源 PDF、<code>content.json</code>、<code>figures.json</code>、裁剪图、交付 PPTX —— <b>只留本地，永不提交</b></li>
+<li>公开仓库（含 git 历史与 LICENSE）不得出现<b>任何</b>文献信息：作者、期刊、卷期、DOI、材料名、篇内数值 —— <b>开放获取（OA）的也不行</b></li>
+<li>仓库里没有、也不应该有个人路径与账号信息；仓库自带的 <code>sample/</code> 是纯合成内容（虚构材料代号、虚构期刊与 DOI、脚本绘制的图）</li>
+<li>对外回复时不复述论文原文片段；数据核对在本地完成</li>
+</ul>
+
+<div class="note warn"><b>为什么这么严：</b>这是「工具仓库」，不是「文献仓库」。
+一旦某篇论文的作者名或图进了公开历史，清洗成本远高于一开始就不放。
+想演示，就用 <code>sample/</code> 那样的合成数据。</div>
+
+<h2 id="credits"><span class="n">11</span>致谢</h2>
+
+<p>本流水线以 <b>PPT Master</b>（<a href="https://github.com/hugohe3/ppt-master">hugohe3/ppt-master</a>，
+作者 Hugo He，MIT License）为推荐后端：</p>
+
+<div class="note ok">
+PPT Master — AI generates native PowerPoint from any document. Native shapes,
+transitions, data-backed charts/tables, audio narration from speaker notes.<br>
+© Hugo He · <a href="https://opensource.org/licenses/MIT">MIT License</a> ·
+<a href="https://github.com/hugohe3/ppt-master">https://github.com/hugohe3/ppt-master</a>
+</div>
+
+<p class="small">宽度估算与导出/门禁/备注步骤复用了该项目的 <code>scripts/</code>
+（svg_to_pptx、svg_quality_checker、compact_*、total_md_split、stamp_native_fallbacks）。
+MIT License 允许再分发，本仓库保留其归属声明；<code>PPTMASTER_DIR</code> / <code>SKILL_SCRIPTS_DIR</code>
+指向的本地安装不属于本仓库，按其自身 LICENSE 使用。</p>
+
+<footer>
+paper-fig-deck · 使用手册 · 生成于仓库当前版本 · 全部命令与输出均在本机实跑核过<br>
+文档与代码同仓，发现问题请直接改 <code>docs/index.html</code> 并附上复现命令。
+</footer>
+
+</body>
+</html>
