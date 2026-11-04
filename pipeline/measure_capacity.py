@@ -10,16 +10,16 @@ That N is the BODY_MAX to use in gen_all.py.
 Usage:
     python measure_capacity.py <paper_workdir> [fig_num]
 """
+import json
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from gen_all import _body_lines  # noqa: E402
 
-from measure_lines import (EMU, build_body_box, render_pngs, ink_bottom,  # noqa: E402
-                           get_body, HAIR_Y)
-import json
+from measure_lines import EMU, HAIR_Y, build_body_box, get_body, ink_bottom, render_pngs  # noqa: E402
+
+from deck import body_lines as _body_lines  # noqa: E402
 
 
 def find_long_body(wd: Path, fig_num=None, need=15):

@@ -3,13 +3,40 @@
 科学论文 PDF → **逐图精讲 PPTX**：左原图 + 右大段正文（≥18pt、首行缩进 + 两端对齐）、
 页底原文引用条 + 逐页演讲者备注。自学与组会汇报两用。后端 PPT 工具链**不限定**，推荐 PPT Master。
 
+## Quickstart（新机器 / 新 agent）
+
+```bash
+git clone <本仓库> && cd paper-fig-deck
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt      # Linux/macOS: .venv/bin/pip
+
+git clone https://github.com/hugohe3/ppt-master /path/to/ppt-master
+export PPTMASTER_DIR=/path/to/ppt-master           # Windows: setx PPTMASTER_DIR ...
+
+python pipeline/doctor.py                          # 环境自检：缺什么、怎么补
+python pipeline/run_pipeline.py sample --dry-run   # 不需要 ppt-master 的冒烟测试
+python pipeline/run_pipeline.py sample --name demo # 完整链路：门禁 → 导出 → 校验
+```
+
+`sample/` 是一篇**纯合成**假论文（虚构材料、虚构数值、脚本生成的图），
+用来验证整条链路而不碰任何真实文献。跑完看尾部：
+
+```
+[8/9] VERIFY slides=10 notes=10 overflow=0 native_tbl=1 media=3
+```
+
+> 换成自己的数据：把 `sample/content.json` 换到你的 workdir 即可 ——
+> 每篇论文只有三步：**填 content.json → 一条命令 → 看 VERIFY**。
+
 ## 架构
 
 ```mermaid
 flowchart LR
   A[论文 PDF<br/>本地] -->|逐图提炼<br/>content_rules.md| C["content.json（本地，不入库）"]
   A -->|extract_figures.py<br/>+ prep_images.py| B["images/（裁剪 JPEG ≤900KB）"]
-  C --> P["run_pipeline.py<br/>一条命令 · 9 步固化"]
+  C --> V{"validate<br/>content_schema.py"}
+  V -->|字段错| C
+  V -->|通过| P["run_pipeline.py<br/>一条命令 · 10 步固化"]
   B --> P
   P --> D["PPTX + 逐页备注"]
   D --> E{"VERIFY<br/>slides==notes · overflow=0"}
@@ -19,23 +46,41 @@ flowchart LR
 
 | 项 | 说明 |
 |---|---|
-| 页面流 | 封面 → 中文摘要 → Introduction 五线（单页）→ 制备方法 → **论证主线总览**（有 `paper.mainline` 时，>9 项双栏）→ 逐图/表（自动拆续页）→ 中文结论 |
+| 页面流 | 封面 → 中文摘要 → Introduction 五线（单页）→ **论证主线总览**（有 `paper.mainline` 时，>9 项双栏）→ 制备方法 → 逐图/表（自动拆续页）→ 中文结论 |
 | 正文上限 | **实测值**（当前 14 行）；换字体/盒宽/行距跑 `measure_*` 重测，禁止凭直觉 |
 | 备注模板 | 主线 / 论证 / 批判 / BMFC / 结论回响 → `pipeline/content_rules.md` |
-| 9 步 | 删旧 notes → SVG → 讲稿 → 拆分 → compact → 原生表 stamp → 门禁（blocking>0 拒导出）→ 导出+后处理 → PPTX 校验+交付 |
+| 10 步 | 校验 → 删旧 notes → 图片入项目 → SVG → 讲稿 → 拆分 → compact → 原生表 stamp → 门禁（blocking>0 拒导出）→ 导出+后处理 → PPTX 校验+交付 |
 
 ## 安装与调用（agent）
 
 | 步 | 内容 |
 |---|---|
 | ① 项目 | `git clone <本仓库>`；venv + `pip install -r requirements.txt` |
-| ② 后端 | `git clone https://github.com/hugohe3/ppt-master`；设 `PPTMASTER_DIR` / `SKILL_SCRIPTS_DIR` |
-| ③ 数据 | 每篇一个本地 workdir：PDF + `content.json` + 裁剪图（`extract_figures.py` / `prep_images.py` 生成） |
-| ④ **一键** | `<venv-python> pipeline/run_pipeline.py <workdir> --name <交付名> [--desktop-dir <目录>]` |
+| ② 后端 | `git clone https://github.com/hugohe3/ppt-master`；设 `PPTMASTER_DIR`（`SKILL_SCRIPTS_DIR` 可选，缺省自动推导） |
+| ③ 数据 | 每篇一个本地 workdir：PDF + `content.json` + 裁剪图（`extract_figures.py` / `prep_images.py` 生成，或直接放 `images/`） |
+| ④ **一键** | `<venv-python> pipeline/run_pipeline.py <workdir> --name <交付名> [--desktop-dir <目录>] [--no-export] [--dry-run]` |
 | ⑤ 验收 | 看尾部 `VERIFY slides=N notes=N overflow=0`；主线总览页/长正文页用浏览器 CDP 截图亲眼看 |
 
 - `content.json` schema + 可粘贴的 agent 启动提示词 → **`docs/agent-install.md`**
+- JSON Schema（IDE 补全 / agent 自检）→ `pipeline/schema/content.schema.json`
+- 校验器单独跑：`python pipeline/content_schema.py <workdir>`（退出码 1 = 有 error）
 - Windows git-bash：原生路径直接传给 `python.exe`，不要 `cd` C:/… 路径
+
+## 质量保障
+
+| 层 | 手段 | 拦住什么 |
+|---|---|---|
+| 输入 | `content_schema.py`（第 0 步） | 字段名错、缺必填、表格行列不匹配、行数超版面 —— 报 `figures[2].slides[0].table_rows[2]` 这样的路径，而不是 KeyError |
+| 版面 | `layout.py` 单一常量表 + `tests/test_layout.py` | 模块重叠、图片超出卡片、字号掉到 18pt 以下 |
+| 排版 | 复用 ppt-master 的宽度估算器（门禁同模型） | SVG 看着正常、PPT 里溢出的情况 |
+| 门禁 | `svg_quality_checker --json`，blocking>0 直接拒导出 | 越界、图文重叠、非法图片引用 |
+| 成品 | `verify_pptx()`：页数 / 备注数 / 越界形状 / 原生表 / 媒体 | slides≠notes、形状出界、原生表没落地 |
+| 回归 | `pytest` + GitHub Actions（3.10 / 3.11 / 3.12） | 改 `split_body` / `wrap` 这类纯逻辑不靠人肉看 |
+
+```bash
+pip install -r requirements-dev.txt
+ruff check . && pytest
+```
 
 ## 后端工具（不限定）
 
@@ -47,8 +92,11 @@ flowchart LR
 | 备注拆分（与 SVG 1:1） | `total_md_split.py` |
 | 原生表标记 | `stamp_native_fallbacks.py --write` |
 
-换其他工具链：设上表两个环境变量；模块名/CLI 不同只需改 `kit.py` 头部 import 与 `run_pipeline.py`
-步骤命令（共两处）。
+换其他工具链：设 `PPTMASTER_DIR` / `SKILL_SCRIPTS_DIR`；模块名/CLI 不同只需改
+`kit.py` 的后端解析（`_resolve_estimator`）与 `run_pipeline.py` 的步骤命令（共两处）。
+
+没有 ppt-master 时 `kit.est_w` 会退回**近似**宽度模型（CJK 1.10em / Latin 0.62em），
+只允许 `--dry-run` 使用 —— 正规生成会直接报错，避免按错的模型排出会溢出的版面。
 
 ## 版面契约（1280×720）
 
@@ -59,13 +107,17 @@ flowchart LR
 | 右面板 | (640,144,608,496)：读点题名 → 正文（≤上限，首行缩进 48px）→ hairline y556 → 原文条 |
 | 颜色 | BLUE #1F3864 · GOLD #C9A227 · DARK #333 · GRAY #595959 · LGRAY #8A8F98 |
 
+全部数值集中在 `pipeline/layout.py`：生成器、后处理、测试共用一张表，改一处即全链路生效。
+
 ## 目录
 
 | 目录 | 内容 |
 |---|---|
-| `pipeline/` | 现行脚本：一键驱动、共享版式、门禁后处理、`content_rules.md` 方法论、`measure_*` 实测（详见 `pipeline/README.md`） |
-| `pilot/` | 初代试点快照（frozen；内容数据本地不入库） |
+| `pipeline/` | 现行脚本：`layout.py` 常量、`deck.py` 页面模型、`content_schema.py` 校验、`doctor.py` 自检、一键驱动、`content_rules.md` 方法论、`measure_*` 实测（详见 `pipeline/README.md`） |
+| `tests/` | pytest：版式约束、排版原语、校验器、页面清单、PPTX 后处理 |
+| `sample/` | **合成**样例 workdir（假论文 + 脚本生成的图），用于冒烟测试 |
 | `docs/` | `agent-install.md` agent 安装与调用指南 |
+| `legacy/` | 初代试点快照（frozen，不参与 lint / 测试，勿改） |
 | `<批次目录>/` | 各论文 workdir，**不入库**（`.git/info/exclude` 逐机守卫，`.gitignore` 不写批次名） |
 
 ## 版权红线
@@ -73,6 +125,7 @@ flowchart LR
 - 源 PDF / `content.json` / 裁剪图 / 交付 PPTX：**只留本地，永不提交**
 - 公开仓库（含 git 历史与 LICENSE）不得出现**任何**文献信息（作者/期刊/卷期/DOI/材料名/篇内数值，
   **OA 也不行**）或任何个人信息
+- `sample/` 因此是纯合成内容：虚构材料代号、虚构期刊与 DOI、脚本绘制的图
 
 ## 致谢（开源依赖）
 

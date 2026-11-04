@@ -4,7 +4,13 @@
 Run with ppt-master venv python (has pymupdf):
   <ppt-master-venv-python> extract_figures.py <pdf> <outdir>
 """
-import fitz, json, re, sys, unicodedata, pathlib
+import json
+import pathlib
+import re
+import sys
+import unicodedata
+
+import fitz
 
 # A caption block is a STANDALONE label line: "Fig. 1" (optionally followed by
 # a trailing period) with nothing else on that first line. In-text references
@@ -21,7 +27,9 @@ def _kind_word(w: str) -> str:
     if wl.startswith("scheme"):
         return "scheme"
     return "figure"
-KIND = lambda m: _kind_word(m.group(1))
+def KIND(m) -> str:
+    return _kind_word(m.group(1))
+
 
 def nfkc(s): return unicodedata.normalize('NFKC', s)
 
@@ -38,13 +46,13 @@ def main(pdf_path, outdir):
             f.write(nfkc(page.get_text('text')))
 
     # meta
-    p0_lines = [l for l in nfkc(doc[0].get_text('text')).splitlines() if l.strip()][:12]
+    p0_lines = [ln.strip() for ln in nfkc(doc[0].get_text('text')).splitlines()
+                if ln.strip()][:12]
     doi_m = re.search(r'10\.\d{4,9}/\S+', nfkc(doc[0].get_text('text')))
     meta = {'file': pdf_path, 'pages': len(doc), 'doi': doi_m.group(0).rstrip('.,;') if doi_m else None,
             'first_lines': p0_lines}
 
     figures = []
-    missing = []
     def _kind_of(word: str) -> str:
         return _kind_word(word)
     for pno, page in enumerate(doc):
@@ -52,7 +60,7 @@ def main(pdf_path, outdir):
         for b in blocks:
             if not b[4].strip():
                 continue
-            ln = [nfkc(l).strip() for l in b[4].splitlines() if l.strip()][:2]
+            ln = [nfkc(line).strip() for line in b[4].splitlines() if line.strip()][:2]
             first = ln[0]
             m = CAP_RE.match(first)
             num_label = None
@@ -71,7 +79,7 @@ def main(pdf_path, outdir):
             if not num_label:
                 continue
             cap_text = nfkc(' '.join(b[4].split()))
-            cap_top, cap_bottom = b[1], b[3]
+            cap_top = b[1]
             pw, ph = page.rect.width, page.rect.height
 
             if kind == 'figure' or kind == 'scheme':
@@ -147,7 +155,7 @@ def main(pdf_path, outdir):
                 if chosen is not None and tb > union.y0 and tb < chosen['y1'] - 10:
                     union = fitz.Rect(union.x0, tb + 1.5, union.x1, union.y1)
                 pix = page.get_pixmap(matrix=fitz.Matrix(z, z), clip=union)
-                w, h = pix.width, pix.height
+                w = pix.width
                 if w > 2000:
                     pix = page.get_pixmap(matrix=fitz.Matrix(z * 2000 / w, z * 2000 / w), clip=union)
                 num_clean = re.sub(r'^[Ff]ig(?:ure)?\.?\s*|[Ss]cheme\s*|[Tt]able\s*', '', num_label)
@@ -169,7 +177,6 @@ def main(pdf_path, outdir):
 
     # in-text reference sentences
     refs = {f['label']: [] for f in figures}
-    pat_cache = {}
     for f in figures:
         lab = f['label'].split()[0] + ' ' + f['label'].split()[1] if f['label'].split() else f['label']
         core = re.sub(r'^[Ff]ig(?:ure)?\.?\s*', '', lab)

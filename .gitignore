@@ -28,3 +28,12 @@ output/*.pptx
 # paper data files (copyright) - keep local only
 pilot/*.json
 
+# dry-run scratch + generated sidecars
+sample/.dryrun/
+sample/page_roles.json
+.doctor-probe
+
+# local virtualenvs
+.venv*/
+venv/
+

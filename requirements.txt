@@ -1,9 +1,16 @@
-# any venv with the requirements below (on the author's machine this is the ppt-master venv)
+# Runtime dependencies. Any Python >= 3.10 venv works (the author's machine uses
+# the ppt-master venv, but nothing here needs it).
 PyMuPDF>=1.24          # PDF text layer + figure-crop rendering (pymupdf / fitz)
-python-pptx>=1.0      # PPTX export verification + test-deck building
-Pillow>=11.0          # image crops / JPEG / PNG QA scans
-lxml>=5.0             # DrawingML surgery in postproc
-pywin32               # PowerPoint COM rendering for measure_* capacity tests (Windows only)
-# Also required, not pip-installable here: the ppt-master skill scripts
-# (svg_quality_checker / svg_to_pptx / compact_* / total_md_split /
-# stamp_native_fallbacks / project_manager) and a local PowerPoint install.
+python-pptx>=1.0       # PPTX verification (slide/notes/shape audit) in run_pipeline
+Pillow>=11.0           # image crops / JPEG / PNG QA scans
+lxml>=5.0              # DrawingML surgery in postproc_justify
+# PowerPoint COM rendering for the measure_* capacity tests. Windows only - the
+# marker keeps `pip install -r requirements.txt` working on Linux/macOS, where the
+# main pipeline has no PowerPoint dependency at all.
+pywin32>=306; sys_platform == "win32"
+# Also required for a real (gated, exportable) run, not pip-installable here: the
+# ppt-master skill scripts (svg_quality_checker / svg_to_pptx / compact_* /
+# total_md_split / stamp_native_fallbacks / project_manager). Point PPTMASTER_DIR
+# (or SKILL_SCRIPTS_DIR) at them, or run `python pipeline/doctor.py`.
+# A local PowerPoint install is only needed for measure_* and the best-quality
+# native chart/table reflow.

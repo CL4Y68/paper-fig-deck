@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: py${{ matrix.python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Unit tests
+        run: pytest -q
+
+      # The sample workdir must always be valid input for the generator.
+      - name: Validate the bundled sample
+        run: python pipeline/content_schema.py sample
+
+      # Proves the generator runs end to end with the approximate width model.
+      # ppt-master is not installed in CI, so --dry-run is the deepest level
+      # available here; the gated export needs the real backend.
+      - name: Smoke-test the generator on the sample
+        run: python pipeline/run_pipeline.py sample --dry-run

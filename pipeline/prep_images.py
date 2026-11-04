@@ -14,10 +14,17 @@ Usage: <ppt-master-venv-python> prep_images.py <workdir> <projdir>
 
 Run with the ppt-master venv python (its Pillow).
 """
+import argparse
 import json
 import pathlib
 import re
 import sys
+
+HERE = pathlib.Path(__file__).parent
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+from layout import FIG_MAX_KB, FIG_MAX_W_PX  # noqa: E402
 
 
 def fig_num(label: str) -> int:
@@ -27,11 +34,58 @@ def fig_num(label: str) -> int:
     return int(m.group(1))
 
 
-def main():
-    if len(sys.argv) < 3:
-        raise SystemExit("usage: prep_images.py <workdir> <projdir>")
-    D = pathlib.Path(sys.argv[1])
-    PROJ = pathlib.Path(sys.argv[2])
+def stage_plain_images(wd: pathlib.Path, proj: pathlib.Path) -> list[pathlib.Path]:
+    """Stage already-named images from <wd>/images into <proj>/images.
+
+    Use this when the crops are final (or hand-made, like the synthetic sample):
+    no figures.json is needed and the file names are preserved, so content.json
+    can reference them directly.
+    """
+    src_dir, out_dir = wd / "images", proj / "images"
+    if not src_dir.is_dir():
+        raise SystemExit(f"no images/ directory in {wd}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    from PIL import Image
+
+    written = []
+    for src in sorted(src_dir.iterdir()):
+        if src.suffix.lower() not in (".jpg", ".jpeg", ".png"):
+            continue
+        im = Image.open(src).convert("RGB")
+        w, h = im.size
+        if w > FIG_MAX_W_PX:
+            im = im.resize((FIG_MAX_W_PX, int(h * FIG_MAX_W_PX / w)),
+                           Image.Resampling.LANCZOS)
+        out = out_dir / f"{src.stem}.jpg"
+        quality = 85
+        im.save(out, "JPEG", quality=quality, optimize=True)
+        while out.stat().st_size // 1024 > FIG_MAX_KB and quality > 60:
+            quality -= 5
+            im.save(out, "JPEG", quality=quality, optimize=True)
+        written.append(out)
+    return written
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(
+        description="Stage figure crops / the title crop into the project's images/ dir.")
+    ap.add_argument("workdir", help="workdir with figures.json and/or images/")
+    ap.add_argument("projdir", help="ppt-master project dir")
+    ap.add_argument("--from-dir", action="store_true",
+                    help="copy every image in <workdir>/images as-is (no figures.json)")
+    args = ap.parse_args(argv)
+
+    D = pathlib.Path(args.workdir)
+    PROJ = pathlib.Path(args.projdir)
+
+    if args.from_dir:
+        files = stage_plain_images(D, PROJ)
+        for f in files:
+            print(f"  {f.name}  {f.stat().st_size // 1024} KB")
+        print(f"staged {len(files)} image(s) -> {PROJ / 'images'}")
+        return 0
+
     outdir = PROJ / "images"
     outdir.mkdir(parents=True, exist_ok=True)
 
@@ -87,7 +141,8 @@ def main():
     for r in report:
         print(r)
     print("total fig*.jpg:", len(list(outdir.glob("fig*.jpg"))))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

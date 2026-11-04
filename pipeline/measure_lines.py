@@ -20,9 +20,11 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from gen_all import _body_lines  # noqa: E402
+import layout
+from deck import body_lines as _body_lines  # noqa: E402
 
-PX0, BOX_W, BODY_Y, HAIR_Y = 668, 552, 212, 556
+PX0, BOX_W, BODY_Y, HAIR_Y = (layout.PX0, layout.PANEL_W_INNER,
+                              layout.BODY_TOP, layout.HAIRLINE_Y)
 EMU = 9525  # 1px = 9525 EMU at 96 dpi
 
 
@@ -47,9 +49,9 @@ def get_body(wd, fig_num=None):
 
 def build_body_box(prs, blank, body: str):
     """One slide with the figure-page body box + y556 hairline reference."""
-    from pptx.util import Pt, Emu
-    from pptx.dml.color import RGBColor
     from lxml import etree
+    from pptx.dml.color import RGBColor
+    from pptx.util import Emu, Pt
 
     slide = prs.slides.add_slide(blank)
     line = slide.shapes.add_shape(1, Emu(PX0 * EMU), Emu(HAIR_Y * EMU),
