@@ -192,7 +192,9 @@ def test_missing_project_pointer_explains_itself():
 def test_allow_approx_controls_strict_mode(content):
     if kit.backend_status().state == "ppt-master":
         pytest.skip("real estimator present")
-    deck.Deck(content, allow_approx=False)     # no est_w call yet -> fine
+    # A strict deck cannot even build its roster: splitting a body needs est_w.
     with pytest.raises(kit.BackendUnavailable):
-        deck.Deck(content, allow_approx=False).pages()
-    deck.Deck(content, allow_approx=True).pages()
+        deck.Deck(content, allow_approx=False)
+    # The approximate model is what --dry-run uses.
+    d = deck.Deck(content, allow_approx=True)
+    assert d.pages()

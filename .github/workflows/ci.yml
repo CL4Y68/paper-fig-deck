@@ -14,6 +14,10 @@ jobs:
   test:
     name: py${{ matrix.python }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    # Force the "no ppt-master installed" path so the approximate width model and
+    # the strict-mode guard are exercised identically on every runner.
+    env:
+      PAPER_FIG_DECK_NO_BACKEND: "1"
     strategy:
       fail-fast: false
       matrix:

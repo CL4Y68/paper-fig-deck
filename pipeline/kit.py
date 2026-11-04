@@ -145,6 +145,11 @@ def _resolve_estimator():
     global _estimator, _backend
     if _estimator is not None:
         return _estimator
+    if os.environ.get("PAPER_FIG_DECK_NO_BACKEND"):
+        # Test/CI hook: behave exactly like a machine without ppt-master, even on
+        # one that has it installed. Lets the approximate path be exercised.
+        _backend = Backend("approx", None, "disabled by PAPER_FIG_DECK_NO_BACKEND")
+        return None
     tried = []
     for cand in _candidate_script_dirs():
         if not (cand / "svg_quality_checker.py").exists():
