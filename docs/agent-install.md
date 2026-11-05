@@ -136,7 +136,8 @@ compact → 原生表 stamp → 门禁 → 导出+后处理 → PPTX 校验+交�
 <venv-python> <repo>/pipeline/batch.py <manifest.json> [--force] [--retries N] [--only <workdir> ...]
 ```
 
-`manifest.json`（`workdir` 相对 manifest 所在目录解析，必须含 `content.json`）：
+`manifest.json`（`workdir` 相对 manifest 所在目录解析，必须含 `content.json`；
+可直接拷贝仓库里的 `docs/batch.example.json` 改）：
 
 ```json
 {"batch": "optional label", "desktop_dir": "可选：所有篇共用的交付目录",

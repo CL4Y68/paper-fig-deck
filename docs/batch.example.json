@@ -1,0 +1,8 @@
+{
+  "batch": "example-batch",
+  "desktop_dir": "~/Desktop/reports",
+  "papers": [
+    {"workdir": "papers/paperA", "name": "PaperA_2026_逐图精讲"},
+    {"workdir": "papers/paperB"}
+  ]
+}
