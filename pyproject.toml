@@ -3,7 +3,7 @@ target-version = "py310"
 line-length = 100
 # Only the shipped code is linted: per-paper workdirs (batch dirs full of local
 # data) and frozen snapshots must never break the build.
-include = ["pipeline/**/*.py", "tests/**/*.py", "sample/**/*.py"]
+include = ["pipeline/**/*.py", "tests/**/*.py", "tools/**/*.py", "sample/**/*.py"]
 extend-exclude = ["legacy", "pilot", "sample/images"]
 
 [tool.ruff.lint]
@@ -13,7 +13,10 @@ select = ["E4", "E7", "E9", "F", "W6", "I"]
 ignore = ["E402"]  # modules intentionally extend sys.path before importing kit
 
 [tool.ruff.lint.isort]
-known-first-party = ["kit", "layout", "deck", "content_schema"]
+known-first-party = [
+    "kit", "layout", "deck", "content_schema", "doctor", "extract_figures",
+    "prep_images", "postproc_justify", "gen_all", "gen_notes", "run_pipeline", "batch",
+]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

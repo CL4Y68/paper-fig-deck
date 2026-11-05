@@ -57,6 +57,11 @@ jobs:
       - name: Validate the bundled sample
         run: python pipeline/content_schema.py sample
 
+      # Numbers quoted in docs/index.html are recomputed from the code: a stale
+      # test count or step count fails the build instead of drifting silently.
+      - name: Docs numbers match the code
+        run: python tools/check_docs.py
+
       # The bundled skill is a thin shell: valid frontmatter, a description short
       # enough for skill indexes, every `<repo>/path` reference resolvable, and no
       # personal identifiers / absolute paths (public-repo rule).
@@ -92,3 +97,25 @@ jobs:
       # available here; the gated export needs the real backend.
       - name: Smoke-test the generator on the sample
         run: python pipeline/run_pipeline.py sample --dry-run
+
+      # ...and one job proves the REAL chain (gate -> export -> postproc ->
+      # PPTX verify) against a freshly cloned backend, so an upstream change
+      # cannot silently break delivery on the user's machine.
+      - name: Clone the recommended backend
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        run: |
+          git clone --depth 1 https://github.com/hugohe3/ppt-master "$RUNNER_TEMP/ppt-master"
+          if [ -f "$RUNNER_TEMP/ppt-master/requirements.txt" ]; then
+            pip install -r "$RUNNER_TEMP/ppt-master/requirements.txt"
+          fi
+
+      - name: Full chain against the real backend
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        env:
+          # the job-level switch forces the no-backend path; this step opts back in
+          PAPER_FIG_DECK_NO_BACKEND: ""
+          PPTMASTER_DIR: ${{ runner.temp }}/ppt-master
+        run: |
+          python pipeline/doctor.py
+          python pipeline/run_pipeline.py sample --name ci-demo \
+            --desktop-dir "$RUNNER_TEMP/out"

@@ -130,6 +130,26 @@ scripts、无写权限）。`--json` 给机器读。
 10 步顺序的坑已固化在驱动里（校验 → 删旧 notes → 图片入项目 → SVG → 讲稿 → 拆分 →
 compact → 原生表 stamp → 门禁 → 导出+后处理 → PPTX 校验+交付）；门禁 blocking>0 直接拒导出。
 
+### 多篇一起跑（可断点续跑）
+
+```powershell
+<venv-python> <repo>/pipeline/batch.py <manifest.json> [--force] [--retries N] [--only <workdir> ...]
+```
+
+`manifest.json`（`workdir` 相对 manifest 所在目录解析，必须含 `content.json`）：
+
+```json
+{"batch": "optional label", "desktop_dir": "可选：所有篇共用的交付目录",
+ "papers": [{"workdir": "batch/paperA", "name": "A_2026_逐图精讲"},
+            {"workdir": "batch/paperB"}]}
+```
+
+- 状态写在 manifest 同目录的 `batch_state.json`，**每篇跑完立刻落盘** → 中断后原样重跑即可，
+  已完成的跳过、失败的自动重试；`--force` 全量重建、`--only` 只跑指定篇。
+- `done` 只在**交付的 PPTX 还在、且 `content.json` 没改过**时算完成：交付被删或文案被编辑
+  都会自动重建，不会让旧片子冒充新数据（`images/` 的变化不算在内，那种情况用 `--force`）。
+- 两个 workdir 目录同名会被拒绝 —— 后端按目录名给项目命名，同名会互相覆盖。
+
 ## 6. agent 跑完查什么
 
 1. 输出尾部 `[8/9] VERIFY slides=N notes=N overflow=0`，且 **slides == notes**（每页有讲稿）

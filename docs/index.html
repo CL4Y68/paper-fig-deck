@@ -76,7 +76,7 @@ footer { font-size:7.6pt; color:#8494ad; margin-top:22pt; border-top:1px solid #
 <span class="tagline">schema_version 2</span>
 <span class="tagline">版面 1280×720 · 正文 ≥24px（18pt）</span>
 <span class="tagline">后端 PPT Master（MIT）· 可替换</span>
-<span class="tagline">100 项测试 · CI 3.10/3.11/3.12</span>
+<span class="tagline">130 项测试 · CI 3.10/3.11/3.12</span>
 </div>
 
 <p class="lead">本手册面向「要用它出片」的人和「要维护它」的人，各占一半篇幅。
@@ -162,7 +162,7 @@ footer { font-size:7.6pt; color:#8494ad; margin-top:22pt; border-top:1px solid #
 <div><div class="n">10</div><div class="l">步骤固化在 run_pipeline.py（第 0 步校验 + 1–9）</div></div>
 <div class="g"><div class="n">14</div><div class="l">正文行数上限（实测，非估计）</div></div>
 <div class="o"><div class="n">18pt</div><div class="l">全片字号下限（= SVG 24px）</div></div>
-<div><div class="n">100</div><div class="l">自动化测试项（含正反例）</div></div>
+<div><div class="n">130</div><div class="l">自动化测试项（含正反例）</div></div>
 </div>
 
 <h2 id="quick"><span class="n">02</span>五分钟上手</h2>
@@ -190,14 +190,21 @@ python pipeline/run_pipeline.py sample --name demo</pre>
 
 <p>第 5 步成功时，尾部一定长这样（数字会随内容变，<b>三个断言</b>不会变）：</p>
 
-<pre>[5/9] gate clean (blocking=0, warnings=3)
+<pre>[truncated] 0 - every rendered field is complete
+[5/9] gate clean (blocking=0, warnings=0)
 [7/9] post-processed -&gt; output\demo_逐图精讲.pptx
 <span class="g">[8/9] VERIFY slides=10 notes=10 overflow=0 native_tbl=1 media=3</span>
-[9/9] delivery -&gt; output\demo_逐图精讲.pptx</pre>
+[9/9] copied to &lt;交付目录&gt;</pre>
 
 <div class="note ok"><b>跑通了就把 sample/ 换成自己的 workdir。</b>
 每篇论文只有三步：填 <code>content.json</code> → 跑一条命令 → 看 VERIFY。
 样例的 <code>content.json</code> 就是填空模板：两个图页（其中一个正文长到会自动拆「续页」）+ 一个表页。</div>
+
+<div class="note"><b>一次做多篇（可断点续跑）：</b>
+<code>pipeline/batch.py manifest.json</code> 按清单逐篇构建，状态逐篇写进同目录的
+<code>batch_state.json</code>；中断后原样重跑，已完成的跳过、失败的自动重试。
+<code>--force</code> 全量重建，<code>--only &lt;workdir&gt;</code> 只跑指定篇；
+交付被删或 <code>content.json</code> 改过的那篇会自动重建。</div>
 
 <div class="note warn"><b>--dry-run 的产物不可交付。</b>
 它用的是<b>近似</b>宽度模型（CJK 1.10em / Latin 0.62em），只用来证明「内容与生成器对得上」。

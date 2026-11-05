@@ -1,0 +1,6 @@
+{
+  "include": ["pipeline", "tests", "tools"],
+  "extraPaths": ["pipeline", "."],
+  "pythonVersion": "3.10",
+  "typeCheckingMode": "basic"
+}

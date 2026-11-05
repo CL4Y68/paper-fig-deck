@@ -83,13 +83,7 @@ def test_main_rewrites_only_body_slides(tmp_path):
     _make_pptx(src, [_slide_xml(), _slide_xml(text="短")])
     roles.write_text(json.dumps({"total": 2, "cx": {"1": 552}}), encoding="utf-8")
 
-    import sys
-    argv = sys.argv
-    sys.argv = ["postproc_justify.py", str(src), str(dst), str(roles)]
-    try:
-        pp.main()
-    finally:
-        sys.argv = argv
+    pp.main([str(src), str(dst), str(roles)])
 
     with zipfile.ZipFile(dst) as z:
         assert "ppt/slides/slide1.xml" in z.namelist()
@@ -98,3 +92,29 @@ def test_main_rewrites_only_body_slides(tmp_path):
     assert f'cx="{552 * EMU}"' in first
     assert 'cx="4000000"' in second          # short text untouched
     assert "[Content_Types].xml" in zipfile.ZipFile(dst).namelist()
+
+
+def test_missing_page_roles_is_an_error(tmp_path):
+    """A deck-specific width map has no safe default: fail instead of guessing."""
+    src = tmp_path / "in.pptx"
+    dst = tmp_path / "out.pptx"
+    _make_pptx(src, [_slide_xml()])
+    try:
+        pp.main([str(src), str(dst)])
+    except SystemExit as exc:
+        assert "page_roles.json is required" in str(exc)
+    else:
+        raise AssertionError("expected SystemExit when page_roles.json is missing")
+    assert not dst.exists()
+
+
+def test_pilot_map_is_available_but_opt_in(tmp_path):
+    src = tmp_path / "in.pptx"
+    dst = tmp_path / "out.pptx"
+    _make_pptx(src, [_slide_xml(), _slide_xml()])
+    pp.main([str(src), str(dst), "--pilot-map"])
+    with zipfile.ZipFile(dst) as z:
+        first = z.read("ppt/slides/slide1.xml").decode("utf-8")
+        second = z.read("ppt/slides/slide2.xml").decode("utf-8")
+    assert 'cx="4000000"' in first          # slide 1 has no pilot width -> untouched
+    assert f'cx="{1184 * EMU}"' in second   # slide 2 = full-text page

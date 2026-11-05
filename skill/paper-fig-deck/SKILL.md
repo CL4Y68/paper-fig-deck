@@ -45,6 +45,9 @@ Python 流水线**（gated SVG → 可编辑 18pt+ PPTX + 逐页讲稿）。本�
    <venv-python> <repo>/pipeline/run_pipeline.py <workdir> --name <交付名>
    ```
 
+   多篇一起跑（可断点续跑）：`<venv-python> <repo>/pipeline/batch.py <manifest.json>`；
+   状态写 `<manifest 同目录>/batch_state.json`，中断后原样重跑，已完成自动跳过。
+
 3. **验收**：日志尾部必须出现 `VERIFY slides=N notes=N overflow=0` 且
    slides == notes；主线总览页 / 长正文页把该页 SVG 包一层 HTML，用浏览器
    CDP 截图亲眼看一次（重叠 / 截断 / 对齐）。

@@ -22,6 +22,17 @@ python pipeline/run_pipeline.py sample --dry-run   # 不需要 ppt-master 的冒
 python pipeline/run_pipeline.py sample --name demo # 完整链路：门禁 → 导出 → 校验
 ```
 
+一次做多篇（可断点续跑）：
+
+```bash
+python pipeline/batch.py batch.json     # batch.json 列出各 workdir
+python pipeline/batch.py batch.json     # 中断后原样重跑：已完成的跳过，只重试失败项
+```
+
+状态逐篇落盘到同目录 `batch_state.json`；`--force` 全量重建、`--retries N` 额外重试、
+`--only <workdir>` 只跑指定篇。每条记录带 `content.json` 指纹：文案改过、或交付被删的那篇
+会自动重建，不会被"已完成"挡住。
+
 `sample/` 是一篇**纯合成**假论文（虚构材料、虚构数值、脚本生成的图），
 用来验证整条链路而不碰任何真实文献。跑完看尾部：
 
@@ -127,7 +138,7 @@ ruff check . && pytest
 |---|---|
 | 字体 | Times New Roman + 宋体，全部 ≥24px（18pt） |
 | 左图卡 | (48,144,568,496)；图 meet 于 (64,160,536,464) |
-| 右面板 | (640,144,608,496)：读点题名 → 正文（≤上限，首行缩进 48px）→ hairline y556 → 原文条 |
+| 右面板 | (640,144,608,530)：读点题名 → 正文（≤上限，首行缩进 48px）→ hairline y556 → 原文条（y582 标签 + y608 起最多 3 行） |
 | 颜色 | BLUE #1F3864 · GOLD #C9A227 · DARK #333 · GRAY #595959 · LGRAY #8A8F98 |
 
 全部数值集中在 `pipeline/layout.py`：生成器、后处理、测试共用一张表，改一处即全链路生效。
@@ -140,6 +151,7 @@ ruff check . && pytest
 | `tests/` | pytest：版式约束、排版原语、校验器、页面清单、PPTX 后处理 |
 | `sample/` | **合成**样例 workdir（假论文 + 脚本生成的图），用于冒烟测试 |
 | `docs/` | `agent-install.md` agent 安装与调用指南 |
+| `tools/` | 维护脚本：`check_docs.py` 把文档里的测试数/步数与代码对齐（CI 会跑） |
 | `skill/` | agent skill 薄壳（`skill/paper-fig-deck/SKILL.md`，拷进 agent 的 skills 目录即用；CI 冒烟校验引用与个人信息） |
 | `legacy/` | 初代试点快照（frozen，不参与 lint / 测试，勿改） |
 | `<批次目录>/` | 各论文 workdir，**不入库**（`.git/info/exclude` 逐机守卫，`.gitignore` 不写批次名） |

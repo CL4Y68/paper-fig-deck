@@ -22,6 +22,7 @@ README, "后端工具"). The **recommended** backend is
 | `postproc_justify.py` | stage 7: PPTX post-processing (restores layout width, `algn=just`, first-line indent) |
 | `prep_images.py` | stage 2b: figure crops from `figures.json` (**or** already-named files in `images/` with `--from-dir`) → JPEG ≤900 KB in the project |
 | `extract_figures.py` | stage 1: figure/table crops from the source PDF (pymupdf) |
+| `batch.py` | multi-paper driver: manifest in, resumable `batch_state.json` out, `--force` / `--retries` / `--only` |
 | `doctor.py` | environment self-check: packages, PPTMASTER_DIR, the 7 required scripts, fonts, write access |
 | `measure_lines.py` / `measure_capacity.py` | measure the real PPT body-box line capacity (PowerPoint COM render + pixel scan) — re-run whenever fonts/box/leading change; never pick the line cap by intuition |
 | `content_rules.md` | **authoring methodology** (writer-perspective): the claim–evidence mainline, the three argumentative layers, the overview-page schema (`paper.mainline`), optional per-figure `arguing`/`critique`, and the speaker-note templates |
@@ -43,6 +44,31 @@ Notes:
   `figures.json` when present, otherwise every file in `<workdir>/images/`.
 - The measure_* scripts read a local batch workdir (`<batch>/<paper>/content.json`);
   they exist to document the measurement method and to be re-run on demand.
+
+## Run many workdirs (resumable)
+
+    <venv-python> pipeline/batch.py <manifest.json> [--state FILE] [--force]
+                   [--retries N] [--only WORKDIR ...] [--json]
+
+`manifest.json`:
+
+    {"batch": "optional label", "desktop_dir": "optional default",
+     "papers": [{"workdir": "papers/paperA", "name": "A_2026_逐图精讲"}, {"workdir": "papers/paperB"}]}
+
+`workdir` resolves against the manifest's directory and must contain `content.json`.
+State (default `<manifest dir>/batch_state.json`) is written after **every** paper,
+so an interruption loses nothing: the same command re-runs only what is not
+finished. A `done` record counts only while its PPTX still exists on disk, so a
+deleted delivery is rebuilt instead of silently skipped. `--retries N` adds N extra
+attempts within one run; a failed paper always gets one fresh attempt next time.
+
+Each record also stores a `content_sig` (sha256 + size of `content.json`): editing a
+paper's content re-arms it, so a re-run rebuilds that paper instead of serving the
+old deck. Changes to `images/` or `figures.json` are not fingerprinted — use
+`--force` (or touch content.json) when only the crops changed.
+
+Two workdirs with the same directory name are rejected on purpose: the backend
+names projects after the workdir, so they would overwrite each other's SVGs.
 
 ## Where the numbers come from
 

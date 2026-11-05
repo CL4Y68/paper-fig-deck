@@ -11,20 +11,25 @@ paragraph is one wrap="square" text frame holding a single a:p. This script:
   2. 两端对齐: a:pPr/@algn="just" on the body frame's paragraph;
   3. 首行缩进两字符: a:pPr/@indent="457200" (36pt = 2 x 18pt CJK chars).
 
-Usage: python postproc_justify.py <src.pptx> <dst.pptx> [page_roles.json]
-  page_roles.json: {"total": N, "cx": {"2": 1184, "3": 552, ...}} (svg px).
-  Without it, falls back to the pilot slide-number map.
+Usage: python postproc_justify.py <src.pptx> <dst.pptx> <page_roles.json>
+  page_roles.json: {"total": N, "cx": {"2": 1184, "3": 552, ...}} (svg px);
+  written by gen_all.py for every deck.
+
+  The wide/narrow width map is deck-specific, so there is no silent default: a
+  missing page_roles.json is an error. `--pilot-map` restores the historical
+  29-slide pilot assumptions for demoing on that one deck only.
 """
+import argparse
 import json
 import re
-import sys
 import zipfile
 from pathlib import Path
 
 EMU = 9525          # EMU per SVG px (12192000 / 1280)
 INDENT = "457200"   # 36pt
 
-# fallback per-slide wrap width (pilot deck, 29 slides)
+# Historical per-slide wrap width for the original 29-slide pilot deck. Kept for
+# --pilot-map only: applying it to any other deck silently sets wrong widths.
 def cx_target_pilot(slide_no: int):
     if slide_no in (2, 3, 4, 29):   # full-text pages
         return 1184
@@ -66,16 +71,35 @@ def patch_frame(blk: str, cx_px: int | None) -> str:
     return blk
 
 
-def main():
-    src, dst = sys.argv[1], sys.argv[2]
+def main(argv: list[str] | None = None):
+    ap = argparse.ArgumentParser(
+        description="Restore wrap width / justify / first-line indent on an exported deck.")
+    ap.add_argument("src", help="PPTX from svg_to_pptx --reflow-text")
+    ap.add_argument("dst", help="output PPTX")
+    ap.add_argument("page_roles", nargs="?",
+                    help="page_roles.json written by gen_all.py (required unless --pilot-map)")
+    ap.add_argument("--pilot-map", action="store_true",
+                    help="use the legacy 29-slide pilot width map (demo only)")
+    args = ap.parse_args(argv)
+
     cx_map = None
-    if len(sys.argv) > 3:
-        cx_map = json.loads(Path(sys.argv[3]).read_text(encoding="utf-8"))["cx"]
+    if args.page_roles:
+        cx_map = json.loads(Path(args.page_roles).read_text(encoding="utf-8"))["cx"]
+    elif not args.pilot_map:
+        raise SystemExit(
+            "[error] page_roles.json is required: it carries this deck's per-slide "
+            "wrap widths.\n"
+            "        gen_all.py writes it next to content.json; pass it as the third "
+            "argument, or\n"
+            "        use --pilot-map to reuse the old 29-slide pilot assumptions "
+            "(wrong for any other deck).")
 
     def cx_for(slide_no: int):
         if cx_map is not None:
             return cx_map.get(str(slide_no))
         return cx_target_pilot(slide_no)
+
+    src, dst = args.src, args.dst
 
     zin = zipfile.ZipFile(src)
     Path(dst).parent.mkdir(parents=True, exist_ok=True)
