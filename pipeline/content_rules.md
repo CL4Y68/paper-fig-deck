@@ -127,3 +127,24 @@ rendered in full; nothing is clipped to one line with an ellipsis.
   the renderer will not use). Verify on a real install before delivery.
 - The build log carries `[truncated] N`; N must be 0. A non-zero N means the
   page shows less than `content.json` says — fix the data, do not ship it.
+
+## 10. Introduction is a fixed five-line analysis (not a summary)
+
+Every single-paper deck carries the same five gold labels, in this order:
+
+| # | label | what goes in it |
+|---|---|---|
+| 1 | 背景与研究现状 | the field's state of the art, with the numbers that make the gap felt |
+| 2 | 提出问题 | what the field still cannot answer, stated as a question |
+| 3 | 别人的相关工作及问题 | the existing routes and **why each falls short** (not a citation list) |
+| 4 | 启发与希望 | the insight that makes a different approach plausible |
+| 5 | 本文研究如何展开 | the paper's actual route: evidence chain, controls, transferability |
+
+- The labels and their order are validated at step 0 (`content_schema.INTRO_ROUTE`):
+  five entries, exact labels, exact order. Missing a line, renaming it, or merging
+  two into "本文方案 / 关键证据 / 结论" is an **error**, not a style choice — line 3
+  is what makes the paper's gap visible, and line 5 is what the figure pages then
+  cash in.
+- Budget per line ~70–110 CJK chars; the whole page must stay ≤14 rendered lines
+  (full width 1184 px, first-line indent 48 px, leading 36 px, top y=168).
+  Size the copy before building: the deck asserts the line count.

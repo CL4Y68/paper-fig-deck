@@ -204,3 +204,31 @@ def test_over_long_reading_point_is_flagged(content):
         "一个明显过长以至于单行面板标题完全放不下的读点题名示例")
     issues = [i for i in cs.validate(content) if i.path.endswith(".reading_point")]
     assert issues, "a title that cannot fit one line must be reported"
+
+
+# ------------------------------------------- the fixed Introduction five-line route
+def test_sample_uses_the_fixed_five_line_route(content):
+    labels = [label for label, _text in content["paper"]["intro_lines"]]
+    assert labels == list(cs.INTRO_ROUTE)
+
+
+def test_a_short_introduction_is_an_error(content):
+    content["paper"]["intro_lines"] = content["paper"]["intro_lines"][:3]
+    issues = cs.errors(cs.validate(content))
+    assert "paper.intro_lines" in paths(issues)
+
+
+def test_a_renamed_introduction_line_is_an_error(content):
+    lines = [list(pair) for pair in content["paper"]["intro_lines"]]
+    lines[2][0] = "别人的工作"
+    content["paper"]["intro_lines"] = lines
+    issues = cs.errors(cs.validate(content))
+    assert "paper.intro_lines" in paths(issues)
+
+
+def test_out_of_order_introduction_is_an_error(content):
+    lines = [list(pair) for pair in content["paper"]["intro_lines"]]
+    lines[1], lines[3] = lines[3], lines[1]
+    content["paper"]["intro_lines"] = lines
+    issues = cs.errors(cs.validate(content))
+    assert "paper.intro_lines" in paths(issues)

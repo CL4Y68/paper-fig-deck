@@ -60,6 +60,8 @@ Python 流水线**（gated SVG → 可编辑 18pt+ PPTX + 逐页讲稿）。本�
 - **引用与标题不允许被静默裁掉**：`quote` 最多 3 行、`reading_point` 必须单行，
   否则第 0 步报 error —— 换一个更短的完整句，别让页面显示半句原文；
   构建日志里的 `[truncated] N` 必须为 0，非 0 就先修数据再交付
+- **Introduction 固定五线**：背景与研究现状 → 提出问题 → 别人的相关工作及问题 →
+  启发与希望 → 本文研究如何展开；标签与顺序由第 0 步校验，缺段 / 改名 / 合并都报 error
 - 数值（配方量、材料参数）一律照抄 `content.json`，写进讲稿前与源文件核对
 - 版权红线（`<repo>/docs/agent-install.md` §8）：源 PDF / content.json / 裁剪图 /
   交付 PPTX 只留本地；公开仓库（含 git 历史）不得出现任何文献信息（**OA 也不行**）

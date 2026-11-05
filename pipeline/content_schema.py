@@ -47,6 +47,17 @@ CELL_CHARS_WARN = 24          # a table cell wider than this collides in 730 px
 READING_POINT_CHARS_WARN = 14  # the panel title must fit one line (~14 CJK chars)
 TABLE_ROWS_MAX = 8            # header + 7 body rows (layout.TABLE_MAX_ROWS)
 
+# The Introduction page is a FIXED five-line analysis. Dropping or merging a line
+# (e.g. "本文方案 / 关键证据 / 结论") hides the layer that makes the paper's gap
+# visible, so the labels are validated, not merely counted.
+INTRO_ROUTE = (
+    "背景与研究现状",
+    "提出问题",
+    "别人的相关工作及问题",
+    "启发与希望",
+    "本文研究如何展开",
+)
+
 
 def _est_lines(text: str, maxw: float) -> tuple[int, bool]:
     """``(line count, exact)`` under the renderer's own width model.
@@ -148,9 +159,16 @@ def validate(content: Any, *, stage: str = "authoring") -> list[Issue]:
             for i, item in enumerate(lines):
                 if not _pair(item):
                     err(f"paper.intro_lines[{i}]", "must be [label, text] with both non-empty")
-            if len(lines) > 5:
-                warn("paper.intro_lines", f"{len(lines)} lines render on one page; "
-                                          "the five-line analysis expects <= 5")
+            route = " → ".join(INTRO_ROUTE)
+            labels = [str(item[0]).strip() for item in lines if _pair(item)]
+            if len(lines) != len(INTRO_ROUTE):
+                err("paper.intro_lines",
+                    f"{len(lines)} line(s); the Introduction is the fixed five-line "
+                    f"analysis ({route}) — never drop or merge a line")
+            elif labels != list(INTRO_ROUTE):
+                err("paper.intro_lines",
+                    f"labels must follow the five-line route ({route}); "
+                    f"got {' → '.join(labels)}")
 
     if "mainline" in paper:
         mainline = paper["mainline"]

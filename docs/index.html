@@ -76,7 +76,7 @@ footer { font-size:7.6pt; color:#8494ad; margin-top:22pt; border-top:1px solid #
 <span class="tagline">schema_version 2</span>
 <span class="tagline">版面 1280×720 · 正文 ≥24px（18pt）</span>
 <span class="tagline">后端 PPT Master（MIT）· 可替换</span>
-<span class="tagline">96 项测试 · CI 3.10/3.11/3.12</span>
+<span class="tagline">100 项测试 · CI 3.10/3.11/3.12</span>
 </div>
 
 <p class="lead">本手册面向「要用它出片」的人和「要维护它」的人，各占一半篇幅。
@@ -162,7 +162,7 @@ footer { font-size:7.6pt; color:#8494ad; margin-top:22pt; border-top:1px solid #
 <div><div class="n">10</div><div class="l">步骤固化在 run_pipeline.py（第 0 步校验 + 1–9）</div></div>
 <div class="g"><div class="n">14</div><div class="l">正文行数上限（实测，非估计）</div></div>
 <div class="o"><div class="n">18pt</div><div class="l">全片字号下限（= SVG 24px）</div></div>
-<div><div class="n">96</div><div class="l">自动化测试项（含正反例）</div></div>
+<div><div class="n">100</div><div class="l">自动化测试项（含正反例）</div></div>
 </div>
 
 <h2 id="quick"><span class="n">02</span>五分钟上手</h2>
@@ -252,7 +252,7 @@ Claude Code / Hermes / OpenClaw 的 skills 目录，再设 <code>PAPER_FIG_DECK_
 <tr><td class="mono">paper.title_zh / journal /<br>authors_short / doi</td><td>是</td><td>封面与页脚用。做样例时也要给<b>虚构</b>值（公开仓库不能出现真实文献信息）</td></tr>
 <tr><td class="mono">paper.title_page_img</td><td>是</td><td>封面图文件名，须存在于项目 <code>images/</code></td></tr>
 <tr><td class="mono">paper.abstract_zh /<br>conclusion_zh</td><td>是</td><td>中文摘要与结论，各 ≤10 行（全宽 1184px）</td></tr>
-<tr><td class="mono">paper.intro_lines</td><td>否</td><td>五线分析：<code>[["背景与研究现状","…"], …]</code>，≤5 条，整页 ≤16 行</td></tr>
+<tr><td class="mono">paper.intro_lines</td><td>否</td><td>五线分析，<b>标签与顺序固定</b>：背景与研究现状 → 提出问题 → 别人的相关工作及问题 → 启发与希望 → 本文研究如何展开（每段 70–110 字，整页 ≤14 行；缺段或改名在第 0 步报 error）</td></tr>
 <tr><td class="mono">paper.mainline</td><td>否</td><td>论证主线：<code>[["Fig 1","它证明了什么"], …]</code>，与 <code>figures</code> 顺序对齐；有它才生成总览页</td></tr>
 <tr><td class="mono">paper.methods_zh</td><td>否</td><td>制备方法整页（≤12 行）</td></tr>
 <tr><td class="mono">paper.message /<br>takeaway_good / if_rebuild</td><td>否</td><td>只进讲稿：三十秒读法、好在哪、若重做会怎么改</td></tr>
