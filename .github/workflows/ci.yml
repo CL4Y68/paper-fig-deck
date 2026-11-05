@@ -49,6 +49,25 @@ jobs:
       - name: Validate the bundled sample
         run: python pipeline/content_schema.py sample
 
+      # The bundled skill is a thin shell: valid frontmatter, every referenced
+      # repo path exists, and no personal identifiers (public-repo rule).
+      - name: Validate the bundled skill
+        run: |
+          python - <<'PY'
+          import pathlib, re, sys
+          p = pathlib.Path("skill/paper-fig-deck/SKILL.md")
+          text = p.read_text(encoding="utf-8")
+          fm = text.split("---", 2)[1]
+          assert "name: paper-fig-deck" in fm, "frontmatter missing name"
+          assert "description:" in fm, "frontmatter missing description"
+          refs = {m for m in re.findall(r"`<repo>/([^`]+)`", text)}
+          missing = [r for r in refs if not pathlib.Path(r).exists()]
+          forbidden = [s for s in ("ZZD", "C:/Users", "C:\\Users", "lit7") if s in text]
+          if missing or forbidden:
+              sys.exit(f"SKILL.md problem: missing={missing} forbidden={forbidden}")
+          print(f"SKILL.md ok ({len(refs)} refs)")
+          PY
+
       # Proves the generator runs end to end with the approximate width model.
       # ppt-master is not installed in CI, so --dry-run is the deepest level
       # available here; the gated export needs the real backend.

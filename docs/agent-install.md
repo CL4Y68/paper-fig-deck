@@ -174,3 +174,19 @@ compact → 原生表 stamp → 门禁 → 导出+后处理 → PPTX 校验+交�
 > `<venv-python> pipeline/run_pipeline.py <workdir> --name 逐图精讲`。
 > 确认 `VERIFY` 行 slides==notes 且 overflow=0，再用浏览器 CDP 截图亲眼看主线总览页与长正文页。
 > 内容数据与 PPTX 只留本地；任何文献信息（含 OA）不得提交到公开仓库。
+
+## 11. 安装为 agent skill（可选）
+
+仓库自带薄壳技能 `skill/paper-fig-deck/SKILL.md`：只含触发条件、入口命令、硬规则
+与速查排错表，**不复制任何代码**，全部指向本指南与 `pipeline/`。把整个目录拷进
+agent 的 skills 目录即可，agent 之后自动识别并驱动本流水线：
+
+| agent | 安装 |
+|---|---|
+| Claude Code | `cp -r <repo>/skill/paper-fig-deck ~/.claude/skills/` |
+| Hermes | 拷入该 profile 的 `skills/` 目录 |
+| 其他（OpenClaw 等） | 同上，进各自的 skills 目录 |
+
+拷出仓库后技能里的 `<repo>` 占位符就指不到了——SKILL.md §0 会要求 agent 先按
+上面的 `git clone` 重新定位仓库（或你直接告诉它本机已有的克隆路径）。
+CI 会对该文件做冒烟校验（frontmatter、引用路径存在、无个人信息字样）。

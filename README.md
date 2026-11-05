@@ -66,6 +66,7 @@ flowchart LR
 | ⑤ | **验收**：看尾部 `VERIFY slides=N notes=N overflow=0`；主线总览页/长正文页用浏览器 CDP 截图亲眼看 |
 
 - `content.json` schema + 可粘贴的 agent 启动提示词 → **`docs/agent-install.md`**
+- agent skill 打包：把 `skill/paper-fig-deck/` 整个目录拷进 agent 的 skills 目录（Claude Code / Hermes / OpenClaw），agent 即自动驱动本流水线；细节见 `docs/agent-install.md` §11
 - JSON Schema（IDE 补全 / agent 自检）→ `pipeline/schema/content.schema.json`
 - 校验器单独跑：`python pipeline/content_schema.py <workdir>`（退出码 1 = 有 error）
 - Windows git-bash：原生路径直接传给 `python.exe`，不要 `cd` C:/… 路径
@@ -121,6 +122,7 @@ ruff check . && pytest
 | `tests/` | pytest：版式约束、排版原语、校验器、页面清单、PPTX 后处理 |
 | `sample/` | **合成**样例 workdir（假论文 + 脚本生成的图），用于冒烟测试 |
 | `docs/` | `agent-install.md` agent 安装与调用指南 |
+| `skill/` | agent skill 薄壳（`skill/paper-fig-deck/SKILL.md`，拷进 agent 的 skills 目录即用；CI 冒烟校验引用与个人信息） |
 | `legacy/` | 初代试点快照（frozen，不参与 lint / 测试，勿改） |
 | `<批次目录>/` | 各论文 workdir，**不入库**（`.git/info/exclude` 逐机守卫，`.gitignore` 不写批次名） |
 
