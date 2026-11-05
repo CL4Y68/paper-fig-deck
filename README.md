@@ -59,11 +59,11 @@ flowchart LR
 
 | 步 | 内容 |
 |---|---|
-| ① 项目 | `git clone <本仓库>`；venv + `pip install -r requirements.txt` |
-| ② 后端 | `git clone https://github.com/hugohe3/ppt-master`；设 `PPTMASTER_DIR`（`SKILL_SCRIPTS_DIR` 可选，缺省自动推导） |
-| ③ 数据 | 每篇一个本地 workdir：PDF + `content.json` + 裁剪图（`extract_figures.py` / `prep_images.py` 生成，或直接放 `images/`） |
-| ④ **一键** | `<venv-python> pipeline/run_pipeline.py <workdir> --name <交付名> [--desktop-dir <目录>] [--no-export] [--dry-run]` |
-| ⑤ 验收 | 看尾部 `VERIFY slides=N notes=N overflow=0`；主线总览页/长正文页用浏览器 CDP 截图亲眼看 |
+| ① | **项目**：`git clone <本仓库>`；venv + `pip install -r requirements.txt` |
+| ② | **后端**：`git clone https://github.com/hugohe3/ppt-master`；设 `PPTMASTER_DIR`（`SKILL_SCRIPTS_DIR` 可选，缺省自动推导） |
+| ③ | **数据**：每篇一个本地 workdir：PDF + `content.json` + 裁剪图（`extract_figures.py` / `prep_images.py` 生成，或直接放 `images/`） |
+| ④ | **一键**：`<venv-python> pipeline/run_pipeline.py <workdir> --name <交付名> [--desktop-dir <目录>] [--no-export] [--dry-run]` |
+| ⑤ | **验收**：看尾部 `VERIFY slides=N notes=N overflow=0`；主线总览页/长正文页用浏览器 CDP 截图亲眼看 |
 
 - `content.json` schema + 可粘贴的 agent 启动提示词 → **`docs/agent-install.md`**
 - JSON Schema（IDE 补全 / agent 自检）→ `pipeline/schema/content.schema.json`
