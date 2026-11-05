@@ -32,6 +32,24 @@ python pipeline/run_pipeline.py sample --name demo # 完整链路：门禁 → �
 > 换成自己的数据：把 `sample/content.json` 换到你的 workdir 即可 ——
 > 每篇论文只有三步：**填 content.json → 一条命令 → 看 VERIFY**。
 
+## 平台
+
+**不绑定系统**：主流程是纯 Python（PyMuPDF / Pillow / lxml / python-pptx），
+Windows、Linux、macOS 都能跑。CI 同时在 ubuntu-latest 与 windows-latest 上验证。
+
+| 平台 | 主流程（5→导出→校验） | 额外能力 |
+|---|---|---|
+| Windows 10/11 | ✅ 实测 | `measure_*.py` 用 PowerPoint COM 重测行数上限；原生表/图重排质量最佳 |
+| Linux（Ubuntu 22.04/24.04） | ✅ 实测（Python 3.12，gate `blocking=0 warnings=0`、`VERIFY 10/10/0`） | `measure_*` 不可用（没有 COM/PowerPoint）——只在改字体/盒宽后才需要重测，平时构建不需要 |
+| macOS | 主流程（同 Linux） | 同上；未在本仓库 CI 覆盖 |
+
+- `requirements.txt` 的 `pywin32` 带 `sys.platform == "win32"` 标记，Linux/macOS 上直接
+  `pip install -r requirements.txt` 不会失败。
+- **字体**：版面按 Times New Roman + 宋体度量，Windows 自带。Linux 上缺字体**不影响构建**
+  （宽度估算用的是内嵌度量，不读本地字体），只影响放映时 PowerPoint 的字体替换 ——
+  Debian/Ubuntu 可 `apt install ttf-mscorefonts-installer` 拿到 Times New Roman，宋体需自备。
+- 换平台后**不要**凭感觉改行数上限：改字体/盒宽/行距才需要重跑 `measure_*`（仅 Windows）。
+
 ## 架构
 
 ```mermaid

@@ -21,8 +21,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
         python: ["3.10", "3.11", "3.12"]
+        exclude:
+          # 3.10 is already covered on ubuntu; keeps the matrix at 5 jobs
+          - os: windows-latest
+            python: "3.10"
+    # Windows runners default to pwsh; the skill validation step uses a bash heredoc.
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
