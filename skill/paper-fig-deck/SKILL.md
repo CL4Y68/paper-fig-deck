@@ -1,6 +1,6 @@
 ---
 name: paper-fig-deck
-description: "科研论文 PDF → 逐图讲解 PPTX（含讲稿备注、质量门禁）。做逐图 deck、跑 run_pipeline、看 VERIFY 时使用。"
+description: "论文 PDF → 逐图精讲 PPTX（讲稿+门禁）。仅用于论文逐图拆解，汇报/讲义另用专门技能。"
 ---
 
 # paper-fig-deck
@@ -11,13 +11,16 @@ Python 流水线**（gated SVG → 可编辑 18pt+ PPTX + 逐页讲稿）。本�
 
 ## 0. 定位仓库
 
-```bash
-git clone <本仓库> <repo>        # <repo> 即仓库根目录，下称 <repo>
-```
+本技能是**薄壳**：不含代码，只指向 `<repo>`（paper-fig-deck 仓库根）。按顺序找，
+命中即停：
 
-若本技能是从 agent 的 skills 目录加载的（仓库被拷走了），先用上面命令重新定位
-`<repo>`；后端工具链 PPT Master（hugohe3/ppt-master，MIT）按
-`<repo>/docs/agent-install.md` §2 的自动发现顺序寻找或显式设 `PPTMASTER_DIR`。
+1. 环境变量 `PAPER_FIG_DECK_DIR`（推荐：装技能时顺手设好，agent 不用猜）
+2. 本机常见位置：`~/paper-fig-deck`、`~/repos/paper-fig-deck`、`~/tools/paper-fig-deck`
+3. 都没有 → 向用户要仓库地址，再 `git clone <仓库地址> <repo>`
+
+判据：`<repo>/pipeline/run_pipeline.py` 与 `<repo>/pipeline/layout.py` 同时存在。
+后端工具链 PPT Master（hugohe3/ppt-master，MIT）按
+`<repo>/docs/agent-install.md` §2 的自动发现顺序寻找，或显式设 `PPTMASTER_DIR`。
 
 ## 1. 安装与自检
 
@@ -34,8 +37,9 @@ git clone <本仓库> <repo>        # <repo> 即仓库根目录，下称 <repo>
    `<repo>/pipeline/extract_figures.py` 从源 PDF 生成）或 PDF + `figures.json`。
    字段规范：`<repo>/pipeline/schema/content.schema.json`（IDE 补全 / agent 自检）；
    方法论（讲稿语气、读点写法、行数上限、BMFC）：`<repo>/pipeline/content_rules.md`。
-2. **一条命令**（10 步链全自动化：第 0 步校验 → 图片入项目 → SVG → 讲稿 →
-   拆分 → compact → 原生表 stamp → 门禁 → 导出+后处理 → PPTX 校验）：
+2. **一条命令**（10 步链全自动化：第 0 步校验，然后 1–9 —— 建项目 → 清旧讲稿 +
+   2b 图片入项目 → SVG → 讲稿 → 拆分 → compact → 原生表 stamp → 门禁 →
+   导出 + 后处理 → 成品校验 → 交付）：
 
    ```bash
    <venv-python> <repo>/pipeline/run_pipeline.py <workdir> --name <交付名>
@@ -49,7 +53,8 @@ git clone <本仓库> <repo>        # <repo> 即仓库根目录，下称 <repo>
 
 - `content_schema.py` 报 **error** 时禁止硬跑；warning 要逐条确认是"接受"还是"要改"
 - 正文行数上限是**实测值**（当前 14 行）：换字体/盒宽/行距必须重跑
-  `<repo>` 的 `measure_lines.py` + `measure_capacity.py`，**禁止凭直觉改**
+  `<repo>/pipeline/measure_lines.py` + `<repo>/pipeline/measure_capacity.py`，
+  **禁止凭直觉改**
 - 门禁 `blocking>0` 时导出被拒——改 `content.json` 或生成参数，**不要手改输出 SVG**
 - `mainline` 条目 >9 自动双栏；读点题名将自动截断，正文靠行数上限控制
 - 数值（配方量、材料参数）一律照抄 `content.json`，写进讲稿前与源文件核对
@@ -68,3 +73,8 @@ git clone <本仓库> <repo>        # <repo> 即仓库根目录，下称 <repo>
 
 更多：`<repo>/pipeline/README.md`（脚本详解）、`<repo>/docs/agent-install.md`
 §5–§10（一键调用选项、排错、版权、重测、启动提示词模板）。
+
+---
+
+> 薄壳内容随 paper-fig-deck 仓库一同分发（MIT License）。把它拷进 agent 的 skills
+> 目录时，请连同仓库根的 `LICENSE` 一起保留 —— MIT 要求在副本中保留版权声明。

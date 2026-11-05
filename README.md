@@ -5,7 +5,7 @@
 
 > **想先看文档？** [使用手册](docs/index.html)（单文件 HTML，可离线打开）·
 > [在线阅读 ↗](https://cl4y68.github.io/paper-fig-deck/)（GitHub Pages）
-> —— 含 11 步流水线、content.json 字段表、版面契约、校验器分级、排错手册。
+> —— 含 10 步流水线、content.json 字段表、版面契约、校验器分级、排错手册。
 
 ## Quickstart（新机器 / 新 agent）
 

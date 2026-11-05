@@ -49,23 +49,34 @@ jobs:
       - name: Validate the bundled sample
         run: python pipeline/content_schema.py sample
 
-      # The bundled skill is a thin shell: valid frontmatter, every referenced
-      # repo path exists, and no personal identifiers (public-repo rule).
+      # The bundled skill is a thin shell: valid frontmatter, a description short
+      # enough for skill indexes, every `<repo>/path` reference resolvable, and no
+      # personal identifiers / absolute paths (public-repo rule).
       - name: Validate the bundled skill
         run: |
           python - <<'PY'
           import pathlib, re, sys
           p = pathlib.Path("skill/paper-fig-deck/SKILL.md")
           text = p.read_text(encoding="utf-8")
-          fm = text.split("---", 2)[1]
-          assert "name: paper-fig-deck" in fm, "frontmatter missing name"
-          assert "description:" in fm, "frontmatter missing description"
-          refs = {m for m in re.findall(r"`<repo>/([^`]+)`", text)}
-          missing = [r for r in refs if not pathlib.Path(r).exists()]
-          forbidden = [s for s in ("ZZD", "C:/Users", "C:\\Users", "lit7") if s in text]
-          if missing or forbidden:
-              sys.exit(f"SKILL.md problem: missing={missing} forbidden={forbidden}")
-          print(f"SKILL.md ok ({len(refs)} refs)")
+          head, fm, _body = text.split("---", 2)
+          assert head.strip() == "", "SKILL.md must start with the frontmatter block"
+          name = re.search(r"^name:\s*(\S+)", fm, re.M).group(1)
+          desc = re.search(r'^description:\s*"(.+)"', fm, re.M).group(1)
+          assert name == p.parent.name, f"name {name!r} != directory {p.parent.name!r}"
+          assert len(desc) <= 60, f"description is {len(desc)} chars (max 60)"
+          # Match the bare `<repo>/path` form, not only backticked ones: the two
+          # entry-point commands are written as
+          # `<venv-python> <repo>/pipeline/run_pipeline.py ...`, which a
+          # backtick-anchored regex silently misses.
+          refs = set(re.findall(r"<repo>/([A-Za-z0-9_./-]+)", text))
+          assert len(refs) >= 7, f"only {len(refs)} path refs found - regex drifted?"
+          missing = sorted(r for r in refs if not pathlib.Path(r).exists())
+          forbidden = [s for s in ("ZZD", "lit7", "C:/Users", "C:\\Users") if s in text]
+          abs_paths = re.findall(r"(?<![A-Za-z])[A-Za-z]:[\\/]", text)
+          if missing or forbidden or abs_paths:
+              sys.exit(f"SKILL.md problem: missing={missing} "
+                       f"forbidden={forbidden} abs={abs_paths}")
+          print(f"SKILL.md ok ({len(refs)} refs, description {len(desc)} chars)")
           PY
 
       # Proves the generator runs end to end with the approximate width model.

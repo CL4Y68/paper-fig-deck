@@ -184,9 +184,13 @@ agent 的 skills 目录即可，agent 之后自动识别并驱动本流水线：
 | agent | 安装 |
 |---|---|
 | Claude Code | `cp -r <repo>/skill/paper-fig-deck ~/.claude/skills/` |
-| Hermes | 拷入该 profile 的 `skills/` 目录 |
+| Hermes | 拷入该 profile 的 skills 目录（Windows 默认 `%LOCALAPPDATA%\hermes\profiles\<profile>\skills\`） |
 | 其他（OpenClaw 等） | 同上，进各自的 skills 目录 |
 
-拷出仓库后技能里的 `<repo>` 占位符就指不到了——SKILL.md §0 会要求 agent 先按
-上面的 `git clone` 重新定位仓库（或你直接告诉它本机已有的克隆路径）。
-CI 会对该文件做冒烟校验（frontmatter、引用路径存在、无个人信息字样）。
+拷出仓库后技能里的 `<repo>` 占位符就指不到了。**推荐顺手设一个环境变量
+`PAPER_FIG_DECK_DIR=<repo>`**，技能 §0 会先读它；没设时按常见位置（`~/paper-fig-deck`、
+`~/repos/paper-fig-deck`、`~/tools/paper-fig-deck`）查找，仍未命中才会请用户提供仓库地址。
+
+拷进 skills 目录时请连仓库根的 `LICENSE` 一起保留 —— MIT 要求在副本中保留版权声明。
+CI 会对该文件做冒烟校验：frontmatter、description ≤60 字符、每个 `<repo>/…` 引用路径
+真实存在、无个人信息字样与绝对路径。

@@ -88,7 +88,7 @@ footer { font-size:7.6pt; color:#8494ad; margin-top:22pt; border-top:1px solid #
 <ol>
 <li><a href="#what">它做什么 / 不做什么</a></li>
 <li><a href="#quick">五分钟上手</a></li>
-<li><a href="#pipeline">一次构建的 11 个步骤</a></li>
+<li><a href="#pipeline">一次构建的 10 个步骤</a></li>
 <li><a href="#content">content.json 字段参考</a></li>
 <li><a href="#layout">版面契约</a></li>
 <li><a href="#validate">校验器：error 与 warning</a></li>
@@ -159,7 +159,7 @@ footer { font-size:7.6pt; color:#8494ad; margin-top:22pt; border-top:1px solid #
 </div>
 
 <div class="kpi">
-<div><div class="n">11</div><div class="l">步骤固化在 run_pipeline.py（含第 0 步校验）</div></div>
+<div><div class="n">10</div><div class="l">步骤固化在 run_pipeline.py（第 0 步校验 + 1–9）</div></div>
 <div class="g"><div class="n">14</div><div class="l">正文行数上限（实测，非估计）</div></div>
 <div class="o"><div class="n">18pt</div><div class="l">全片字号下限（= SVG 24px）</div></div>
 <div><div class="n">78</div><div class="l">自动化测试项（含正反例）</div></div>
@@ -203,16 +203,24 @@ python pipeline/run_pipeline.py sample --name demo</pre>
 它用的是<b>近似</b>宽度模型（CJK 1.10em / Latin 0.62em），只用来证明「内容与生成器对得上」。
 正规生成会强制要求真实后端，否则直接报错 —— 这是刻意的：按错的模型排出来的版面，在 PowerPoint 里会溢出。</div>
 
-<h2 id="pipeline"><span class="n">03</span>一次构建的 11 个步骤</h2>
+<div class="note"><b>想让它变成 agent 自动执行的技能？</b>
+仓库自带薄壳技能 <code>skill/paper-fig-deck/</code>（只有触发条件、入口命令、硬规则与
+排错表，不含代码）。把整个目录拷进
+Claude Code / Hermes / OpenClaw 的 skills 目录，再设 <code>PAPER_FIG_DECK_DIR=&lt;repo&gt;</code>
+指向本仓库即可；CI 会校验它的 frontmatter、引用路径与描述长度。细节见
+<code>docs/agent-install.md</code> §11。</div>
 
-<p><code>run_pipeline.py</code> 把顺序坑固化成一条命令。你只需要知道「哪一步会停、停了改什么」。</p>
+<h2 id="pipeline"><span class="n">03</span>一次构建的 10 个步骤</h2>
+
+<p><code>run_pipeline.py</code> 把顺序坑固化成一条命令。你只需要知道「哪一步会停、停了改什么」。
+编号是 <b>第 0 步校验 + 1–9</b>；第 2 步实际由两件事组成（清旧讲稿、图片入项目），下表拆成 2 与 2b 便于对照日志。</p>
 
 <table class="t">
 <tr><th style="width:52px">步</th><th style="width:132px">动作</th><th>做什么 / 为什么必须在这个位置</th></tr>
 <tr><td class="mono">0</td><td><span class="k">校验</span></td><td><code>content_schema.validate()</code>：字段缺失、类型错、表格行列不匹配、行数超版面 —— 报出精确路径，在写任何文件之前就停。</td></tr>
 <tr><td class="mono">1</td><td><span class="k">项目</span></td><td>读 <code>content.json[paper][ppt_project]</code>；目录不在了就用 <code>project_manager.py init</code> 重建，并把新路径写回 content.json（从工具打印的 <code>Project created:</code> 行解析，不靠猜路径）。</td></tr>
 <tr><td class="mono">2</td><td><span class="k">清旧讲稿</span></td><td>删 <code>notes/*.md</code>。<b>必须在拆分之前</b>：<code>total_md_split.py</code> 的 1:1 检查会把上一次的残留算进去。</td></tr>
-<tr><td class="mono">2b</td><td><span class="k">图片入项目</span></td><td>有 <code>figures.json</code> 按图表编号压成 <code>figNN.jpg</code>；否则把 <code>images/</code> 里的 jpg/png 原样 stage 进 <code>&lt;project&gt;/images/</code>（≤2000px、≤900KB）。</td></tr>
+<tr><td class="mono">2b</td><td><span class="k">图片入项目</span><br><span class="small">第 2 步的子步</span></td><td>有 <code>figures.json</code> 按图表编号压成 <code>figNN.jpg</code>；否则把 <code>images/</code> 里的 jpg/png 原样 stage 进 <code>&lt;project&gt;/images/</code>（≤2000px、≤900KB）。</td></tr>
 <tr><td class="mono">3</td><td><span class="k">生成</span></td><td><code>gen_all</code>（SVG）→ <code>gen_notes</code>（讲稿）→ <code>total_md_split</code> → compact 样式 → compact 坐标。</td></tr>
 <tr><td class="mono">4</td><td><span class="k">原生表标记</span></td><td>只对含 <code>kind:"table"</code> 的稿子：<code>stamp_native_fallbacks --write</code>，<b>必须在 compact 之后、门禁之前</b>（compact 会重写 SVG，SHA 会失效）。</td></tr>
 <tr><td class="mono">5</td><td><span class="k">门禁</span></td><td><code>svg_quality_checker --stage final --json</code>；结论只认 <code>validation/svg_quality_report.json</code>，不看 stdout。<code>blocking&gt;0</code> 直接拒绝导出。</td></tr>
