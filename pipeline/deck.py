@@ -156,6 +156,47 @@ class Deck:
         kit.set_strict(not allow_approx)
         self.slides, self.n_lead = build_slides(content)
         self.total = self.n_lead + len(self.slides) + 1
+        # Rendered-text losses: [{"page", "field", "dropped"}]. A non-empty list
+        # means a page shows less than content.json says — gen_all prints it and
+        # run_pipeline surfaces it in the build log. Never let this be silent.
+        self.truncated: list[dict] = []
+
+    # -- truncation bookkeeping -------------------------------------------
+    def _note_truncation(self, page: str, field: str, dropped: int) -> None:
+        if dropped > 0:
+            self.truncated.append({"page": page, "field": field, "dropped": dropped})
+
+    def _title(self, text: str, width: float, page: str) -> str:
+        """One-line heading: truncate, but record what got shaved off."""
+        out = kit.truncate1(text, layout.BODY_PX, width)
+        if out != text:
+            self._note_truncation(page, "reading_point", len(text) - len(out.rstrip("\u2026")))
+        return out
+
+    def _quote_block(self, x: int, label_y: int, first_y: int, quote: str,
+                     quote_ref: str, width: float, page: str) -> str:
+        """Source quotation, wrapped to QUOTE_MAX_LINES lines (never one-line clipped).
+
+        Step 0 rejects quotes that need more lines, so `dropped` should be 0 on
+        a validated deck; the record is the defence-in-depth for bypasses
+        (--skip-validate, hand-edited JSON).
+        """
+        lines, dropped = kit.wrap_capped(quote, layout.BODY_PX, width,
+                                         layout.QUOTE_MAX_LINES)
+        self._note_truncation(page, "quote", dropped)
+        body = [f'<text x="{x}" y="{label_y}" font-size="{layout.BODY_PX}" '
+                f'font-weight="bold" fill="{layout.GRAY}">原文（{kit.esc(quote_ref)}）</text>',
+                f'<text x="{x}" y="{first_y}" font-size="{layout.BODY_PX}" '
+                f'fill="{layout.LGRAY}">{kit.esc(lines[0])}']
+        for line in lines[1:]:
+            body.append(f'<tspan x="{x}" dy="{layout.QUOTE_LEAD}">{kit.esc(line)}</tspan>')
+        body.append("</text>")
+        return "".join(body)
+
+    def stats(self) -> dict:
+        """Build statistics for the driver's log line."""
+        return {"pages": self.total, "truncated": len(self.truncated),
+                "losses": list(self.truncated)}
 
     # -- shared chrome -----------------------------------------------------
     def _chrome(self, title: str, pageno: int) -> str:
@@ -313,11 +354,14 @@ class Deck:
                 ref_w = kit.est_w(ref + "\u3000", layout.BODY_PX)
                 claim_x = x + max(layout.OVERVIEW_REF_COL, int(ref_w) + 8)
                 claim_text = kit.truncate1(claim, layout.BODY_PX, x + col_w - claim_x)
+                if claim_text != claim:
+                    self._note_truncation(f"{pageno:02d}_overview", "mainline claim",
+                                          len(claim) - len(claim_text.rstrip("\u2026")))
                 out.append(
                     f'<g id="ovrow{ci}_{ri:02d}" '
                     f'data-pptx-bounds="{x} {y - 30} {col_w} 40">'
                     f'<text x="{x}" y="{y}" font-size="{layout.BODY_PX}" fill="{layout.DARK}">'
-                    f'<tspan fill="{layout.GOLD}" font-weight="bold">{kit.esc(ref)}</tspan>'
+                    f'<tspan x="{x}" fill="{layout.GOLD}" font-weight="bold">{kit.esc(ref)}</tspan>'
                     f'<tspan x="{claim_x}" fill="{layout.DARK}">{kit.esc(claim_text)}</tspan>'
                     f"</text></g>")
         out.append(kit.page_tail())
@@ -333,21 +377,20 @@ class Deck:
                                  maxw=layout.PANEL_W_INNER,
                                  indent_px=layout.FIRST_LINE_INDENT)
         assert n <= layout.BODY_MAX, f"body overflows ({n} lines): {body[:40]}"
+        page = slug_for(spec, pageno)
         panel = [
             f'<g id="panel" data-pptx-bounds="{layout.PANEL_BOUNDS}">',
             f'<text x="{layout.PX0}" y="180" font-size="{layout.BODY_PX}" '
             f'font-weight="bold" fill="{layout.DARK}">'
-            f'{kit.esc(kit.truncate1(spec["reading_point"], layout.BODY_PX, layout.PANEL_W_INNER))}'
+            f'{kit.esc(self._title(spec["reading_point"], layout.PANEL_W_INNER, page))}'
             f"</text>",
             # NOTE: uniform x keeps the exporter reflow-merge eligible; the 2-char
             # first-line indent is applied to the merged PPTX box by postproc.
             svg,
             kit.hairline(layout.HAIRLINE_Y),
-            f'<text x="{layout.PX0}" y="{layout.QUOTE_LABEL_Y}" font-size="{layout.BODY_PX}" '
-            f'font-weight="bold" fill="{layout.GRAY}">原文（{kit.esc(spec["quote_ref"])}）</text>',
-            kit.mtext(layout.PX0, layout.QUOTE_Y,
-                      kit.truncate1(spec["quote"], layout.BODY_PX, layout.PANEL_W_INNER),
-                      layout.BODY_PX, layout.LGRAY, maxw=layout.PANEL_W_INNER),
+            self._quote_block(layout.PX0, layout.QUOTE_LABEL_Y, layout.QUOTE_Y,
+                              spec["quote"], spec["quote_ref"],
+                              layout.PANEL_W_INNER, page),
             "</g>",
         ]
         return "".join([kit.page_head("content"), kit.bg(), self._chrome(title, pageno),
@@ -418,18 +461,15 @@ class Deck:
                                             indent_px=layout.FIRST_LINE_INDENT)
         assert n_lines <= 8, f"table_note overflows ({n_lines} lines): {s['table_note'][:40]}"
         ny = layout.BODY_TOP + layout.BODY_LEAD * n_lines + 36
+        page = slug_for(spec, pageno)
         panel = [
-            '<g id="panel" data-pptx-bounds="800 144 432 496">',
+            '<g id="panel" data-pptx-bounds="800 144 432 530">',
             f'<text x="{nx}" y="180" font-size="{layout.BODY_PX}" font-weight="bold" '
             f'fill="{layout.DARK}">'
-            f'{kit.esc(kit.truncate1(s["reading_point"], layout.BODY_PX, nw))}</text>',
+            f'{kit.esc(self._title(s["reading_point"], nw, page))}</text>',
             note_svg,
             f'<rect x="{nx}" y="{ny}" width="{nw}" height="1" fill="{layout.LINE}"/>',
-            f'<text x="{nx}" y="{ny + 30}" font-size="{layout.BODY_PX}" '
-            f'font-weight="bold" fill="{layout.GRAY}">原文（{kit.esc(s["quote_ref"])}）</text>',
-            kit.mtext(nx, ny + 62,
-                      kit.truncate1(s["quote"], layout.BODY_PX, nw),
-                      layout.BODY_PX, layout.LGRAY, maxw=nw),
+            self._quote_block(nx, ny + 30, ny + 62, s["quote"], s["quote_ref"], nw, page),
             "</g>",
         ]
         return "".join([kit.page_head("content"), kit.bg(),
@@ -495,9 +535,11 @@ class Deck:
         return slugs
 
 
-def write_page_roles(deck: Deck, workdir: pathlib.Path) -> pathlib.Path:
+def write_page_roles(deck: Deck, workdir: pathlib.Path,
+                     slugs: list[str] | None = None) -> pathlib.Path:
+    """Pass `slugs` from a completed write() so the deck is not rendered twice."""
     path = pathlib.Path(workdir) / "page_roles.json"
-    path.write_text(json.dumps(deck.page_roles(), ensure_ascii=False, indent=1),
+    path.write_text(json.dumps(deck.page_roles(slugs), ensure_ascii=False, indent=1),
                     encoding="utf-8")
     return path
 

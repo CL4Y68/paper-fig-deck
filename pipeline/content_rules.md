@@ -107,3 +107,23 @@ still build unchanged.
 Body wrap box = 14 lines at 18pt TNR+SimSun, 552 px, hairline at y=556
 (4 px clearance at 14 lines; 15 lines overflow to 584 px). `split_body()`
 chunks longer bodies into continuation slides automatically.
+
+## 9. Quote-band budget (a citation is content, not decoration)
+
+The quote band sits between the y=556 hairline and the footer: label at y=582,
+first quote line at y=608, leading 28 px, **at most 3 lines** (552 px column) —
+and 3 lines in the 376 px note column of a table page. Everything that fits is
+rendered in full; nothing is clipped to one line with an ellipsis.
+
+- `content_schema.py` measures each quote with the renderer's own width model
+  and raises an **error** when it needs a 4th line. The fix is always to pick a
+  shorter *complete* sentence (or clause), never to let the page show a
+  truncated citation. Quotes are verbatim: trim by choosing a shorter span, not
+  by rewriting words.
+- `reading_point` is a one-line panel title and is validated the same way — a
+  title that needs wrapping is an error, not something to shave.
+- On a machine without ppt-master only the approximate width model exists, so
+  these two checks downgrade to warnings (CI must not block a deck on a model
+  the renderer will not use). Verify on a real install before delivery.
+- The build log carries `[truncated] N`; N must be 0. A non-zero N means the
+  page shows less than `content.json` says — fix the data, do not ship it.

@@ -319,7 +319,9 @@ def main(argv: list[str] | None = None) -> int:
               "reference missing figures unless the project images/ dir is populated")
 
     # 3) generate -----------------------------------------------------------
-    run([PY, HERE / "gen_all.py", wd, "--project-dir", proj])
+    gen = run([PY, HERE / "gen_all.py", wd, "--project-dir", proj])
+    if "[truncated] 0" not in gen.stdout:
+        print("  WARNING: a rendered field lost text — see the [truncated] lines above")
     run([PY, HERE / "gen_notes.py", wd, "--project-dir", proj])
     run([PY, SK / "total_md_split.py", proj])
     run([PY, SK / "compact_svg_styles.py", proj / "svg_output", "--inplace"])
@@ -348,8 +350,18 @@ def main(argv: list[str] | None = None) -> int:
             print("  BLOCKING:", issue.get("file"), "|", (issue.get("message") or "")[:120])
         more = f" (+{len(blocking) - 10} more)" if len(blocking) > 10 else ""
         raise SystemExit(f"gate blocking={len(blocking)}{more} - fix before exporting")
-    print(f"[5/9] gate clean (blocking=0, "
-          f"warnings={report['summary'].get('warnings')})")
+    warn_issues = [i for cat in ("introduced", "inherited")
+                   for i in report["categories"].get(cat, {}).get("issues", [])]
+    n_warn = report["summary"].get("warnings", len(warn_issues))
+    if warn_issues:
+        # "clean" is a claim, not a label: only say it when nothing is flagged.
+        print(f"[5/9] gate passed with {n_warn} warning(s) — read them before delivery:")
+        for issue in warn_issues[:8]:
+            print(f"   {issue.get('file')}: {(issue.get('message') or '')[:150]}")
+        if len(warn_issues) > 8:
+            print(f"   (+{len(warn_issues) - 8} more in validation/svg_quality_report.json)")
+    else:
+        print(f"[5/9] gate clean (blocking=0, warnings={n_warn})")
     if args.no_export:
         print("--no-export: stopping after the gate")
         return 0

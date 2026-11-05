@@ -27,6 +27,8 @@ import pathlib
 import sys
 from typing import Any, NamedTuple
 
+import layout
+
 SCHEMA_VERSION = "2"
 SUPPORTED_VERSIONS = ("1", "2")
 FIGURE_KINDS = ("figure", "scheme", "table")
@@ -40,10 +42,37 @@ TABLE_SLIDE_REQUIRED = ("reading_point", "table_note", "quote", "quote_ref")
 
 # Soft caps: over these the page still builds, but a human should re-read it.
 BODY_CHARS_WARN = 1400        # ~4 rendered figure pages at 14 lines x 34 chars
-QUOTE_CHARS_WARN = 160        # the on-slide quote is truncated to one line
+QUOTE_CHARS_WARN = 110        # guidance for the hard line-count cap below
 CELL_CHARS_WARN = 24          # a table cell wider than this collides in 730 px
-READING_POINT_CHARS_WARN = 14  # the panel title is truncated to one line
+READING_POINT_CHARS_WARN = 14  # the panel title must fit one line (~14 CJK chars)
 TABLE_ROWS_MAX = 8            # header + 7 body rows (layout.TABLE_MAX_ROWS)
+
+
+def _est_lines(text: str, maxw: float) -> tuple[int, bool]:
+    """``(line count, exact)`` under the renderer's own width model.
+
+    ``exact=False`` when only the approximate model is available (no ppt-master
+    on this machine, e.g. CI): callers downgrade the verdict to a warning,
+    because refusing a deck on a model the renderer will not use is a false
+    positive.
+    """
+    try:
+        import kit  # sibling module; shares layout.py with deck.py
+        exact = kit.backend_status().state == "ppt-master"
+        return len(kit.wrap(text, layout.BODY_PX, maxw)), exact
+    except Exception:  # pragma: no cover - only when kit cannot load
+        em = sum(1.0 if ord(ch) > 0x2E80 else 0.62 for ch in text) * layout.BODY_PX
+        return max(1, -(-int(em) // int(maxw))), False
+
+
+def _too_long(need: int, limit: int, path: str, msg: str, err, warn, exact: bool) -> None:
+    """Report an over-long field: error on the real model, warning otherwise."""
+    if need <= limit:
+        return
+    (err if exact else warn)(
+        path, msg + ("" if exact else " [approximate width model: verify on a "
+                                      "machine with ppt-master installed]"))
+
 
 
 class Issue(NamedTuple):
@@ -200,14 +229,20 @@ def _validate_figure(fig: dict, path: str, err, warn) -> None:
             warn(f"{sp}.body", f"{len(body)} chars will auto-split into "
                                f"{-(-len(body) // 400)}+ pages — consider one idea per slide")
         quote = slide.get("quote")
-        if isinstance(quote, str) and len(quote) > QUOTE_CHARS_WARN:
-            warn(f"{sp}.quote", f"{len(quote)} chars; the on-slide band shows one "
-                                "truncated line (the full quote stays in the notes)")
+        if isinstance(quote, str) and quote.strip():
+            need, exact = _est_lines(quote, layout.PANEL_W_INNER)
+            _too_long(need, layout.QUOTE_MAX_LINES, f"{sp}.quote",
+                      f"needs {need} lines at {layout.PANEL_W_INNER} px; the quote band "
+                      f"shows at most {layout.QUOTE_MAX_LINES} — the page must not clip a "
+                      f"citation, so quote a shorter complete sentence "
+                      f"(about {QUOTE_CHARS_WARN} chars)", err, warn, exact)
         rp = slide.get("reading_point")
-        if isinstance(rp, str) and len(rp) > READING_POINT_CHARS_WARN:
-            warn(f"{sp}.reading_point",
-                 f"{len(rp)} chars; the panel title is one line and truncates "
-                 f"around {READING_POINT_CHARS_WARN} CJK chars")
+        if isinstance(rp, str) and rp.strip():
+            need, exact = _est_lines(rp, layout.PANEL_W_INNER)
+            _too_long(need, 1, f"{sp}.reading_point",
+                      "the panel title is one line and must not be truncated "
+                      f"(~{READING_POINT_CHARS_WARN} CJK chars at {layout.PANEL_W_INNER} px)",
+                      err, warn, exact)
         if not _s(slide.get("what")):
             err(f"{sp}.what", "required (one-line reading instruction)")
 
@@ -228,10 +263,19 @@ def _validate_table(fig: dict, path: str, err, warn) -> None:
         if not _s(slide.get(key)):
             err(f"{sp}.{key}", "required non-empty string")
     rp = slide.get("reading_point")
-    if isinstance(rp, str) and len(rp) > READING_POINT_CHARS_WARN:
-        warn(f"{sp}.reading_point",
-             f"{len(rp)} chars; the note-column title is one line and truncates "
-             f"around {READING_POINT_CHARS_WARN} CJK chars")
+    if isinstance(rp, str) and rp.strip():
+        need, exact = _est_lines(rp, layout.NOTE_PANEL_W)
+        _too_long(need, 1, f"{sp}.reading_point",
+                  "the note-column title is one line and must not be truncated "
+                  f"(~{READING_POINT_CHARS_WARN} CJK chars at {layout.NOTE_PANEL_W} px)",
+                  err, warn, exact)
+    quote = slide.get("quote")
+    if isinstance(quote, str) and quote.strip():
+        need, exact = _est_lines(quote, layout.NOTE_PANEL_W)
+        _too_long(need, layout.QUOTE_MAX_LINES, f"{sp}.quote",
+                  f"needs {need} lines at {layout.NOTE_PANEL_W} px; the note column shows "
+                  f"at most {layout.QUOTE_MAX_LINES} — the page must not clip a citation, "
+                  "so quote a shorter complete sentence", err, warn, exact)
 
     rows = slide.get("table_rows")
     headers = slide.get("headers")
@@ -296,7 +340,7 @@ def json_schema() -> dict:
             "reading_point": nonempty_str("读点题名（右面板标题）"),
             "what": nonempty_str("一句读图指令"),
             "body": nonempty_str("正文段落（自动拆续页）"),
-            "quote": nonempty_str("原文引用（单行，超长截断）"),
+            "quote": nonempty_str("原文引用（逐字摘录；最多 3 行，超长在第 0 步报 error）"),
             "quote_ref": nonempty_str("页码/章节标注"),
         },
         "additionalProperties": True,

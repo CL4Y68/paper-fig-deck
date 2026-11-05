@@ -336,6 +336,26 @@ def mtext_lines(x, y, text, size, fill, weight=None, leading=None, maxw=None,
     return svg, n
 
 
+def wrap_capped(text: str, size: int, maxw: float,
+                max_lines: int) -> tuple[list[str], int]:
+    """Wrap to at most ``max_lines``; return ``(lines, dropped_chars)``.
+
+    A quotation is content, not decoration: callers MUST surface
+    ``dropped_chars`` (``content_schema`` already rejects over-long quotes at
+    step 0, so a non-zero value here means the data slipped past validation).
+    The last kept line gets an ellipsis so a rendered page can never pretend to
+    be a complete sentence.
+    """
+    lines = wrap(text, size, maxw)
+    if len(lines) <= max_lines:
+        return lines, 0
+    kept = lines[:max_lines]
+    dropped = sum(len(ln) for ln in lines[max_lines:])
+    last = kept[-1] + "\u2026"
+    kept[-1] = last if est_w(last, size) <= maxw else truncate1(last, size, maxw)
+    return kept, dropped
+
+
 def count_lines(text: str, size: int, maxw: float, indent_px: int = 0) -> int:
     """How many lines `mtext_lines` would emit (same model, no XML built)."""
     if indent_px:

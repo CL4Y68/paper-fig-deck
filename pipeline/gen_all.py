@@ -62,11 +62,18 @@ def main(argv: list[str] | None = None) -> int:
 
     deck = Deck(content, allow_approx=args.dry_run)
     slugs = deck.write(proj)
-    roles = write_page_roles(deck, wd)
+    roles = write_page_roles(deck, wd, slugs)
     print(f"emitted {len(slugs)} SVGs; TOTAL={deck.total} -> {proj / 'svg_output'}")
     for slug in slugs:
         print(" ", slug)
     print(f"page roles -> {roles}")
+    stats = deck.stats()
+    if stats["truncated"]:
+        print(f"[truncated] {stats['truncated']} rendered field(s) lost text:")
+        for loss in stats["losses"]:
+            print(f"   {loss['page']} {loss['field']}: -{loss['dropped']} chars")
+    else:
+        print("[truncated] 0 - every rendered field is complete")
     return 0
 
 

@@ -12,7 +12,7 @@ README, "后端工具"). The **recommended** backend is
 | file | role |
 |---|---|
 | `layout.py` | **single source of truth** for the 1280×720 geometry: canvas, module bounds, panel box, measured body cap/leading, colors, table geometry, cover geometry |
-| `kit.py` | SVG primitives: tokenizer, gate-accurate width estimator (lazy, with an explicit approximate fallback), `wrap` / `truncate1` / `mtext_lines`, page envelope, header/footer chrome |
+| `kit.py` | SVG primitives: tokenizer, gate-accurate width estimator (lazy, with an explicit approximate fallback), `wrap` / `wrap_capped` / `truncate1` / `mtext_lines`, page envelope, header/footer chrome |
 | `deck.py` | `Deck` object + `build_slides()`: content.json → page roster → SVG pages for cover / abstract / intro 5-line / mainline overview / methods / figures / tables / conclusion (long bodies auto-split) |
 | `content_schema.py` | **dependency-free validator** for `content.json` (errors vs warnings, field paths) + the JSON Schema mirror writer |
 | `schema/content.schema.json` | generated JSON Schema, for editors and agents (`python content_schema.py --write-json-schema ...`) |

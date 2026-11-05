@@ -144,7 +144,7 @@ compact → 原生表 stamp → 门禁 → 导出+后处理 → PPTX 校验+交�
 | `[error] … no ppt-master scripts/ dir found` | 后端没装或路径不对 | 设 `PPTMASTER_DIR`；跑 `doctor.py` 看它找到哪 |
 | 第 0 步报 `figures[i].slides[j].xxx` | content.json 字段缺失/类型错 | 按路径补；`--json` 便于脚本处理 |
 | gate `BLOCKING: … invalid image source: External image not found` | 图片没进项目 `images/` | 确认 workdir 有 `images/` 或 `figures.json`；驱动会自动 stage |
-| gate `BLOCKING: … exceeds <g id="panel"> … horizontal axis` | 读点题名/文字超出面板 | 缩短文案（读点题名已自动截断，正文靠行数上限控制） |
+| gate `BLOCKING: … exceeds <g id="panel"> … horizontal axis` | 读点题名/文字超出面板 | 缩短文案；`reading_point` 与 `quote` 在第 0 步就被拦（不自动截断），正文靠行数上限控制 |
 | `gate blocking=N` | 版面越界 / 图文重叠 | 按打印出的文件名与 message 改 `content.json`，别改 SVG |
 | `notes/svg mismatch` | 讲稿与页面没 1:1 | 驱动会先删旧 notes 再重生成；手工跑时也要先清 `notes/*.md` |
 | `VERIFY … overflow>0` | PPTX 里有形状出界 | 通常是正文框宽被改；检查 `page_roles.json` 与 `postproc_justify` |

@@ -7,6 +7,8 @@ import pathlib
 import pytest
 
 import content_schema as cs
+import kit
+import layout
 
 SAMPLE = pathlib.Path(__file__).resolve().parents[1] / "sample" / "content.json"
 
@@ -175,3 +177,30 @@ def test_cli_exit_codes(tmp_path):
 
 def test_load_accepts_a_workdir_path():
     assert cs.load(SAMPLE.parent)["paper"]["doi"] == "10.0000/jss.2026.0001"
+
+
+# ------------------------------------------------ quote / title width evidence
+def test_sample_quotes_fit_the_quote_band(content):
+    """The bundled sample is the reference deck: no quotation may need a 4th line."""
+    for fig in content["figures"]:
+        width = (layout.NOTE_PANEL_W if fig.get("kind") == "table"
+                 else layout.PANEL_W_INNER)
+        for slide in fig["slides"]:
+            lines = kit.wrap(slide["quote"], layout.BODY_PX, width)
+            assert len(lines) <= layout.QUOTE_MAX_LINES, (slide["quote"], len(lines))
+
+
+def test_over_long_quote_is_an_error_when_the_real_model_is_available(content):
+    content["figures"][0]["slides"][0]["quote"] = "word " * 80
+    issues = [i for i in cs.validate(content) if i.path.endswith(".quote")]
+    assert issues, "an over-long quotation must be reported"
+    exact = kit.backend_status().state == "ppt-master"
+    # Off-backend we must not block a deck on the approximate model.
+    assert issues[0].severity == ("error" if exact else "warning")
+
+
+def test_over_long_reading_point_is_flagged(content):
+    content["figures"][0]["slides"][0]["reading_point"] = (
+        "一个明显过长以至于单行面板标题完全放不下的读点题名示例")
+    issues = [i for i in cs.validate(content) if i.path.endswith(".reading_point")]
+    assert issues, "a title that cannot fit one line must be reported"

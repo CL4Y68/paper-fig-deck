@@ -45,14 +45,14 @@
           "reading_point": "钝化前后量子产率对比",
           "what": "左图比较钝化与对照组的量子产率，右图给出对应的形貌照片。",
           "body": "先看纵轴的绝对数值：对照组为 12%，钝化组为 41%，提升约 3.4 倍，这是全文最核心的现象。再看右图的形貌：两组颗粒尺寸与分布几乎一致，说明产率提升不是靠长成更大的晶体或更少的晶界。作者在这里做了一个正确的控制——如果只看产率，读者会怀疑是形貌变化带来的偶然结果，形貌对照把这个可能性排除掉。需要注意的是，形貌照片只覆盖了一个视场，统计代表性有限，这一点作者在后文的重复实验中部分弥补。综合来看，这一页确立了两件事：现象真实存在，且不能用地貌变化解释。",
-          "quote": "The passivated films show a quantum yield of 41%, compared with 12% for the control, while the grain morphology remains essentially unchanged.",
+          "quote": "The passivated films show a quantum yield of 41%, compared with 12% for the control.",
           "quote_ref": "p. 3, Fig. 1"
         },
         {
           "reading_point": "同一现象在五个批次中的复现",
           "what": "补充图给出五个独立批次的产率分布，检验第一页的现象是否可重复。",
           "body": "这一页回答的是“第一页是不是运气好”。五个独立批次的产率集中在 38% 至 43% 之间，对照组集中在 10% 至 14%，两组没有重叠。批间波动约正负 2 个百分点，相对提升幅度稳定在 3 倍上下。作者没有用误差棒糊过去，而是把每个批次的散点都画出来，这一点值得学习：当样本量小的时候，展示全部分布比展示均值和误差更有说服力。局限在于所有批次都来自同一台设备、同一批原料，跨实验室的复现仍然未知。",
-          "quote": "Across five independent batches the passivated samples remain in the 38-43% range, with no overlap against the 10-14% control range.",
+          "quote": "Five batches stay in the 38-43% range, with no overlap against the 10-14% control.",
           "quote_ref": "p. 4, Fig. S2"
         }
       ]
@@ -68,7 +68,7 @@
           "reading_point": "增亮来自陷阱态密度下降",
           "what": "左图是瞬态衰减曲线，右图是由热激电流谱估算的陷阱态密度。",
           "body": "左图看衰减：钝化组的快衰减分量明显减弱，慢分量占比上升，说明非辐射复合通道被抑制，这与产率提升的方向一致。右图看陷阱态密度：钝化后下降约一个数量级，从十的十七次方量级降到十的十六次方量级。两图合起来构成一条因果链——界面重构降低了陷阱态密度，陷阱态减少使非辐射复合变慢，最终表现为产率上升。作者同时用尺寸与掺杂两组对照排除了替代解释：尺寸分布没有系统差异，掺杂浓度低于检测限。这条链的薄弱环节在于陷阱态密度是间接估算量，缺少直接的空间分辨证据。",
-          "quote": "The trap density drops by roughly one order of magnitude after passivation, coinciding with a suppressed fast-decay component in the transient traces.",
+          "quote": "The trap density drops by roughly one order of magnitude, with a suppressed fast-decay component.",
           "quote_ref": "p. 5, Fig. 2"
         }
       ]
@@ -83,7 +83,7 @@
           "reading_point": "五种基底的提升幅度",
           "what": "表格比较五种基底的对照产率、钝化后产率与提升倍数。",
           "table_note": "五种基底的提升倍数落在 1.8 至 3.5 倍之间，没有一种基底出现负向结果，这支持“策略可迁移”的主张。但区间宽度接近两倍，说明基底本身仍显著影响效果，作者没有进一步解释差异来源，这是表格之后最值得追问的地方。",
-          "quote": "The same passivation protocol improves the quantum yield on all five substrates, by factors between 1.8 and 3.5.",
+          "quote": "All five substrates improve, by factors of 1.8 to 3.5.",
           "quote_ref": "p. 7, Table 1",
           "headers": ["基底", "对照产率", "钝化后", "提升倍数"],
           "table_rows": [

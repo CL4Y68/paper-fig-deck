@@ -122,3 +122,27 @@ def test_strict_mode_raises_only_when_backend_missing(monkeypatch):
             kit.est_w("x", 24)
     finally:
         kit.set_strict(False)
+
+
+# ---------------------------------------------------------------- wrap_capped
+def test_wrap_capped_keeps_everything_when_it_fits():
+    lines, dropped = kit.wrap_capped("短句。", 24, 552, 3)
+    assert dropped == 0
+    assert lines == ["短句。"]
+
+
+def test_wrap_capped_caps_lines_and_reports_the_loss():
+    long = ("The passivated films show a quantum yield of 41%, compared with 12% "
+            "for the control, while the grain morphology stays unchanged. ") * 2
+    lines, dropped = kit.wrap_capped(long, 24, 552, 3)
+    assert len(lines) == 3
+    assert dropped > 0, "a capped wrap must report how many characters were dropped"
+    assert lines[-1].endswith("\u2026"), "a capped last line must show the ellipsis"
+    assert all(kit.est_w(ln, 24) <= 552 for ln in lines)
+
+
+def test_wrap_capped_never_reports_a_loss_it_did_not_make():
+    text = " ".join(["word"] * 20)          # wraps to 2 lines, cap is 3
+    lines, dropped = kit.wrap_capped(text, 24, 552, 3)
+    assert dropped == 0
+    assert " ".join(lines).split() == text.split()

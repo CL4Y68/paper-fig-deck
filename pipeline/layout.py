@@ -33,7 +33,11 @@ CONTENT_W = CANVAS_W - 2 * MARGIN_X          # 1184
 # modules do not overlap.
 HEADER_BOUNDS = "48 24 1184 110"
 LEFT_BOUNDS = "48 144 568 496"
-PANEL_BOUNDS = "640 144 608 496"
+# 530 tall (to y674): the quote band wraps up to QUOTE_MAX_LINES lines and must
+# stay inside its module bounds. The footer band starts at 676 because a 24 px
+# line at baseline 700 has its ascent at 679.6 — 674 keeps a 2 px gap and still
+# clears the quote's descent (last baseline 664 + 8.4).
+PANEL_BOUNDS = "640 144 608 530"
 FOOTER_BOUNDS = "48 676 1184 32"
 
 LEFT_CARD = (48, 144, 568, 496)              # x, y, w, h  (white card)
@@ -55,9 +59,12 @@ NOTE_PANEL_W = 376
 # Full-width text pages (abstract / methods / conclusion / introduction)
 TEXT_X0 = 48
 TEXT_W = CONTENT_W
-TEXT_TOP = 156
+# 168, not 156: a 24 px line whose baseline sits at 156 has its ascent at ~135.6,
+# i.e. ABOVE the 144 module top — the gate then reports a 1.6% vertical overflow
+# on every intro/methods page. Baseline must clear its own ascent.
+TEXT_TOP = 168
 TEXT_LEAD = 36
-INTRO_MAX_LINES = 16
+INTRO_MAX_LINES = 14     # 168 + 13*36 = 636 baseline, ink bottom ~642 (< footer 676)
 ABSTRACT_MAX_LINES = 10
 CONCLUSION_MAX_LINES = 10
 METHODS_MAX_LINES = 12
@@ -74,8 +81,16 @@ BODY_ZONE_H = BODY_ZONE_BOTTOM - BODY_TOP   # 336
 BODY_MAX = 14
 BODY_LEAD = 36
 HAIRLINE_Y = 556
-QUOTE_LABEL_Y = 584
-QUOTE_Y = 616
+
+# Quote band: the source quotation is CONTENT, never trim it silently. Three
+# wrapped lines at 552 px hold ~110 Latin characters; anything longer is a
+# content_schema error (step 0), so the author rewrites a shorter complete
+# sentence instead of shipping a page that reads "…the quantum yield of 4…".
+QUOTE_LABEL_Y = 582
+QUOTE_Y = 608
+QUOTE_LEAD = 28
+QUOTE_MAX_LINES = 3
+QUOTE_ZONE_BOTTOM = 674     # 664 + descent 8.4 stays clear of the 676 footer band
 
 # Overview page (one row per figure/table claim)
 OVERVIEW_Y0 = 170

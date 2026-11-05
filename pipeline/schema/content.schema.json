@@ -302,7 +302,7 @@
                     "quote": {
                       "type": "string",
                       "minLength": 1,
-                      "description": "原文引用（单行，超长截断）"
+                      "description": "原文引用（逐字摘录；最多 3 行，超长在第 0 步报 error）"
                     },
                     "quote_ref": {
                       "type": "string",

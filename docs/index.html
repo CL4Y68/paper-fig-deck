@@ -76,7 +76,7 @@ footer { font-size:7.6pt; color:#8494ad; margin-top:22pt; border-top:1px solid #
 <span class="tagline">schema_version 2</span>
 <span class="tagline">版面 1280×720 · 正文 ≥24px（18pt）</span>
 <span class="tagline">后端 PPT Master（MIT）· 可替换</span>
-<span class="tagline">85 项测试 · CI 3.10/3.11/3.12</span>
+<span class="tagline">96 项测试 · CI 3.10/3.11/3.12</span>
 </div>
 
 <p class="lead">本手册面向「要用它出片」的人和「要维护它」的人，各占一半篇幅。
@@ -162,7 +162,7 @@ footer { font-size:7.6pt; color:#8494ad; margin-top:22pt; border-top:1px solid #
 <div><div class="n">10</div><div class="l">步骤固化在 run_pipeline.py（第 0 步校验 + 1–9）</div></div>
 <div class="g"><div class="n">14</div><div class="l">正文行数上限（实测，非估计）</div></div>
 <div class="o"><div class="n">18pt</div><div class="l">全片字号下限（= SVG 24px）</div></div>
-<div><div class="n">85</div><div class="l">自动化测试项（含正反例）</div></div>
+<div><div class="n">96</div><div class="l">自动化测试项（含正反例）</div></div>
 </div>
 
 <h2 id="quick"><span class="n">02</span>五分钟上手</h2>
@@ -264,7 +264,7 @@ Claude Code / Hermes / OpenClaw 的 skills 目录，再设 <code>PAPER_FIG_DECK_
 </table>
 
 <div class="note"><b>正文怎么写：</b>一个 <code>body</code> 只讲一个读点。超过 14 行会自动拆成「（续）」页，但那是兜底，不是目标 ——
-拆页会打断阅读节奏。<code>reading_point</code> 是右面板标题，单行，中文超过 14 字会被截断（校验器会给 warning）。</div>
+拆页会打断阅读节奏。<code>reading_point</code> 是右面板标题，单行；放不下时第 0 步直接报 <b>error</b>（标题被裁掉等于丢信息，不让它悄悄发生）。<code>quote</code> 最多 3 行，超了同样报 error —— 请换一个更短的完整句，而不是让页面显示半句。</div>
 
 <p>机器可读版本：<code>pipeline/schema/content.schema.json</code>（IDE 补全 / agent 自检都能用）。生成方式：</p>
 <pre>python pipeline/content_schema.py --write-json-schema pipeline/schema/content.schema.json</pre>
@@ -278,9 +278,9 @@ Claude Code / Hermes / OpenClaw 的 skills 目录，再设 <code>PAPER_FIG_DECK_
 <tr><th style="width:150px">元素</th><th>参数（SVG px，画布 1280×720）</th></tr>
 <tr><td class="k">字号</td><td>全部 ≥24px（= 18pt）；标题 32px；页脚 24px</td></tr>
 <tr><td class="k">左图卡</td><td>(48,144) 568×496；图按 <code>meet</code> 落在 (64,160) 536×464</td></tr>
-<tr><td class="k">右面板</td><td>(640,144) 608×496；文字起点 x=668，换行宽 552</td></tr>
+<tr><td class="k">右面板</td><td>(640,144) 608×530；文字起点 x=668，换行宽 552</td></tr>
 <tr><td class="k">正文区</td><td>y212 → y548；实测 14 行封顶，行距按行数自适应（<code>min(36, 336/n)</code>）</td></tr>
-<tr><td class="k">原文条</td><td>y556 细分隔线 → y584 标签 → y616 引用（单行，超长截断，全文留在讲稿里）</td></tr>
+<tr><td class="k">原文条</td><td>y556 细分隔线 → y582 标签 → y608 起最多 3 行引用（行距 28）；超出 3 行在第 0 步报 error，页面上不会出现「…」半句</td></tr>
 <tr><td class="k">表格页</td><td>表格 (48,160) 730 宽、行高 48、≤8 行；右注栏 x=828，宽 376</td></tr>
 <tr><td class="k">总览页</td><td>每行一个模块；≤9 行单栏（1184 宽），&gt;9 行双栏（560 宽）；标签列固定 132px，保证所有 claim 起点对齐</td></tr>
 <tr><td class="k">颜色</td><td>BLUE #1F3864 · GOLD #C9A227 · DARK #333333 · GRAY #595959 · LGRAY #8A8F98</td></tr>
@@ -298,8 +298,8 @@ Claude Code / Hermes / OpenClaw 的 skills 目录，再设 <code>PAPER_FIG_DECK_
 
 <table class="o">
 <tr><th style="width:78px">级别</th><th style="width:210px">典型触发</th><th>为什么这样分级</th></tr>
-<tr><td class="k">error</td><td>必填字段缺失/空串 · <code>figures</code> 为空 · <code>kind</code> 不在三种之内 · 表格行列数不匹配 · 表格超过 8 行 · 列数 &gt;6 · <code>schema_version</code> 不支持</td><td>这些会让页面缺内容或直接崩，没有「先建出来看看」的余地</td></tr>
-<tr><td class="k">warning</td><td>正文 &gt;1400 字 · 引用 &gt;160 字 · 单元格 &gt;24 字 · 读点题名 &gt;14 字 · <code>mainline</code> 条数与 <code>figures</code> 不一致 · 缺 <code>schema_version</code></td><td>建得出，但会拆很多页 / 被截断 / 部分图拿不到主线注释</td></tr>
+<tr><td class="k">error</td><td>必填字段缺失/空串 · <code>figures</code> 为空 · <code>kind</code> 不在三种之内 · 表格行列数不匹配 · 表格超过 8 行 · 列数 &gt;6 · <code>schema_version</code> 不支持 · <b>引用超过 3 行</b> · <b>读点题名放不下一行</b></td><td>这些会让页面缺内容或直接崩，没有「先建出来看看」的余地</td></tr>
+<tr><td class="k">warning</td><td>正文 &gt;1400 字 · 单元格 &gt;24 字 · <code>mainline</code> 条数与 <code>figures</code> 不一致 · 缺 <code>schema_version</code> · 机器上没装后端时的宽度类检查（近似模型不阻塞）</td><td>建得出，但会拆很多页 / 部分图拿不到主线注释</td></tr>
 </table>
 
 <pre><span class="c"># 单独跑校验（比整条流水线快得多）</span>
@@ -310,7 +310,8 @@ python pipeline/content_schema.py &lt;workdir&gt; --stage build   <span class="c
 <p>报错长这样，直接照路径改：</p>
 <pre><span class="o">[error] figures[2].slides[0].table_rows[2]: 3 cells for 4 columns</span>
 <span class="o">[error] paper.doi: required non-empty string</span>
-[warn]  figures[1].slides[0].reading_point: 18 chars; the panel title is one line and truncates around 14 CJK chars</pre>
+[error] figures[0].slides[1].quote: needs 4 lines at 552 px; the quote band shows at most 3 — the page must not clip a citation, so quote a shorter complete sentence (about 110 chars)
+[error] figures[2].slides[0].reading_point: the note-column title is one line and must not be truncated (~14 CJK chars at 376 px)</pre>
 
 <h2 id="verify"><span class="n">07</span>验收与质量保障</h2>
 
@@ -345,7 +346,7 @@ PAPER_FIG_DECK_NO_BACKEND=1 pytest          <span class="c"># 模拟没装 ppt-m
 <tr><td class="mono">[error] … no ppt-master scripts/ dir found</td><td>后端没装或路径不对</td><td>设 <code>PPTMASTER_DIR</code>（指向含 <code>scripts/svg_quality_checker.py</code> 的目录），跑 <code>doctor.py</code> 看它找到了哪</td></tr>
 <tr><td class="mono">content.json has N error(s)</td><td>内容字段问题</td><td>按打印的字段路径改；<code>--json</code> 便于脚本处理</td></tr>
 <tr><td class="mono">BLOCKING: … External image not found</td><td>图片没进项目 <code>images/</code></td><td>确认 workdir 里有 <code>images/</code> 或 <code>figures.json</code>；驱动会自动 stage</td></tr>
-<tr><td class="mono">BLOCKING: … exceeds &lt;g id="panel"&gt;<br>… horizontal axis</td><td>单行文字比面板宽</td><td>缩短文案；读点题名已自动截断，正文靠行数上限控制</td></tr>
+<tr><td class="mono">BLOCKING: … exceeds &lt;g id="panel"&gt;<br>… horizontal axis</td><td>单行文字比面板宽</td><td>缩短文案；读点题名与引用在第 0 步就被拦，正文靠行数上限控制</td></tr>
 <tr><td class="mono">notes/svg mismatch</td><td>讲稿与页面没 1:1</td><td>驱动会先删旧讲稿；手工跑时要自己清 <code>notes/*.md</code></td></tr>
 <tr><td class="mono">VERIFY … overflow&gt;0</td><td>PPTX 里有形状出界</td><td>多半是正文框宽被改过；检查 <code>page_roles.json</code> 与 <code>postproc_justify</code></td></tr>
 <tr><td class="mono">native tables requested but no &lt;a:tbl&gt;</td><td>导出时少了原生表开关</td><td>确认走 <code>run_pipeline.py</code>（它按内容自动加 <code>--native-charts-and-tables</code>）</td></tr>

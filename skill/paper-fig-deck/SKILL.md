@@ -56,7 +56,10 @@ Python 流水线**（gated SVG → 可编辑 18pt+ PPTX + 逐页讲稿）。本�
   `<repo>/pipeline/measure_lines.py` + `<repo>/pipeline/measure_capacity.py`，
   **禁止凭直觉改**
 - 门禁 `blocking>0` 时导出被拒——改 `content.json` 或生成参数，**不要手改输出 SVG**
-- `mainline` 条目 >9 自动双栏；读点题名将自动截断，正文靠行数上限控制
+- `mainline` 条目 >9 自动双栏；正文靠行数上限控制
+- **引用与标题不允许被静默裁掉**：`quote` 最多 3 行、`reading_point` 必须单行，
+  否则第 0 步报 error —— 换一个更短的完整句，别让页面显示半句原文；
+  构建日志里的 `[truncated] N` 必须为 0，非 0 就先修数据再交付
 - 数值（配方量、材料参数）一律照抄 `content.json`，写进讲稿前与源文件核对
 - 版权红线（`<repo>/docs/agent-install.md` §8）：源 PDF / content.json / 裁剪图 /
   交付 PPTX 只留本地；公开仓库（含 git 历史）不得出现任何文献信息（**OA 也不行**）

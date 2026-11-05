@@ -1,6 +1,8 @@
 # python scratch / caches
 __pycache__/
 *.pyc
+.coverage
+htmlcov/
 
 # QA render outputs & browser profiles (regenerable)
 pilot/qa*/

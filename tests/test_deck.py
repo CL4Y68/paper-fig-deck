@@ -198,3 +198,50 @@ def test_allow_approx_controls_strict_mode(content):
     # The approximate model is what --dry-run uses.
     d = deck.Deck(content, allow_approx=True)
     assert d.pages()
+
+
+# ------------------------------------------------- quotes / truncation ledger
+def test_sample_renders_without_losing_text(content):
+    d = deck.Deck(content, allow_approx=True)
+    d.pages()
+    assert d.stats()["truncated"] == 0, d.stats()["losses"]
+
+
+def test_quotes_wrap_instead_of_being_cut_to_one_line(content):
+    d = deck.Deck(content, allow_approx=True)
+    svgs = [svg for _p, _s, svg in d.pages()]
+    with_quote = [s for s in svgs if "原文（" in s]
+    assert with_quote
+    assert any(f'dy="{layout.QUOTE_LEAD}"' in s for s in with_quote), (
+        "a multi-line quotation must emit dy continuation lines")
+    assert not any(s.count("原文（") != 1 for s in with_quote)
+
+
+def test_an_over_long_quote_is_recorded_not_silently_clipped(content):
+    import copy
+    c = copy.deepcopy(content)
+    c["figures"][0]["slides"][0]["quote"] = (
+        "This sentence is deliberately long enough to need more lines than the quote "
+        "band can show, so the deck has to report the loss instead of clipping it "
+        "quietly and pretending the page is complete. ") * 2
+    d = deck.Deck(c, allow_approx=True)
+    d.pages()
+    losses = d.stats()["losses"]
+    assert any(loss["field"] == "quote" and loss["dropped"] > 0
+               for loss in losses), losses
+
+
+def test_an_over_long_title_is_recorded_not_silently_shaved(content):
+    import copy
+    c = copy.deepcopy(content)
+    c["figures"][0]["slides"][0]["reading_point"] = "一个明显过长以至于单行面板标题放不下的读点题名示例"
+    d = deck.Deck(c, allow_approx=True)
+    d.pages()
+    assert any(loss["field"] == "reading_point" for loss in d.stats()["losses"])
+
+
+def test_quote_band_stays_above_the_footer():
+    assert layout.QUOTE_Y + (layout.QUOTE_MAX_LINES - 1) * layout.QUOTE_LEAD < int(
+        layout.FOOTER_BOUNDS.split()[1])
+    assert int(layout.PANEL_BOUNDS.split()[1]) + int(layout.PANEL_BOUNDS.split()[3]) <= int(
+        layout.FOOTER_BOUNDS.split()[1])
