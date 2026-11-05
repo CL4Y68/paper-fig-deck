@@ -15,7 +15,7 @@ python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt      # Linux/macOS: .venv/bin/pip
 
 git clone https://github.com/hugohe3/ppt-master /path/to/ppt-master
-export PPTMASTER_DIR=/path/to/ppt-master           # Windows: setx PPTMASTER_DIR ...
+export PPTMASTER_DIR=/path/to/ppt-master           # 仓库根；Windows: setx PPTMASTER_DIR ...
 
 python pipeline/doctor.py                          # 环境自检：缺什么、怎么补
 python pipeline/run_pipeline.py sample --dry-run   # 不需要 ppt-master 的冒烟测试

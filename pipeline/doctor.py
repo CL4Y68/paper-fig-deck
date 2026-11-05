@@ -107,15 +107,21 @@ def check_backend() -> list[Check]:
         out.append(Check("ppt-master scripts", BAD,
                          "not found - git clone https://github.com/hugohe3/ppt-master"))
         return out
-    missing = [name for name in PPTMASTER_SCRIPTS
-               if not (root / "scripts" / name).exists()]
+    scripts = kit.resolve_scripts_dir(root)
+    if scripts is None:
+        out.append(Check("ppt-master scripts", BAD,
+                         f"{root}: no scripts/svg_quality_checker.py (looked at "
+                         "<dir>/scripts and <dir>/skills/ppt-master/scripts)"))
+        return out
+    missing = [name for name in PPTMASTER_SCRIPTS if not (scripts / name).exists()]
     if missing:
         out.append(Check("ppt-master scripts", BAD,
-                         f"{root / 'scripts'} is missing {', '.join(missing)}"))
+                         f"{scripts} is missing {', '.join(missing)}"))
     else:
-        out.append(Check("ppt-master scripts", OK, f"{len(PPTMASTER_SCRIPTS)} scripts in "
-                                                   f"{root / 'scripts'}"))
-    projects = [root.parent / "projects", root.parent.parent / "projects"]
+        out.append(Check("ppt-master scripts", OK,
+                         f"{len(PPTMASTER_SCRIPTS)} scripts in {scripts}"))
+    projects = [base / "projects" for base in
+                (scripts.parent, scripts.parent.parent, scripts.parent.parent.parent)]
     existing = [p for p in projects if p.is_dir()]
     out.append(Check("project root", OK if existing else WARN,
                      ", ".join(str(p) for p in (existing or projects)), required=False))

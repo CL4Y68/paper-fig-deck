@@ -116,6 +116,27 @@ _backend = Backend("approx", None, "not resolved yet")
 _strict = False
 
 
+def resolve_scripts_dir(root: pathlib.Path) -> pathlib.Path | None:
+    """Locate the ppt-master scripts/ dir under `root` (old and new layouts).
+
+    ppt-master moved its pipeline scripts from `<repo>/scripts/` to
+    `<repo>/skills/ppt-master/scripts/`, so a fresh clone and an older skill
+    install have different shapes. `root` may be the repo root, the skill dir,
+    or the scripts dir itself; None means "not here".
+    """
+    root = pathlib.Path(root)
+    for cand in (root,
+                 root / "scripts",
+                 root / "skills" / "ppt-master" / "scripts",
+                 root / "ppt-master" / "scripts"):
+        if (cand / "svg_quality_checker.py").is_file():
+            return cand
+    for cand in sorted(root.glob("skills/*/scripts")):
+        if (cand / "svg_quality_checker.py").is_file():
+            return cand
+    return None
+
+
 def _candidate_script_dirs() -> Iterable[pathlib.Path]:
     """Places a ppt-master scripts/ dir may live, most specific first."""
     env = os.environ.get(BACKEND_ENV)
@@ -123,7 +144,8 @@ def _candidate_script_dirs() -> Iterable[pathlib.Path]:
         yield pathlib.Path(env)
     proj = os.environ.get(PROJECT_ENV)
     if proj:
-        yield pathlib.Path(proj) / "scripts"
+        root = pathlib.Path(proj)
+        yield resolve_scripts_dir(root) or (root / "scripts")
     home = pathlib.Path.home()
     # Hermes skill installs: per-profile skills dirs under the platform data root.
     for base in (os.environ.get("LOCALAPPDATA"), os.environ.get("XDG_DATA_HOME")):
@@ -133,11 +155,12 @@ def _candidate_script_dirs() -> Iterable[pathlib.Path]:
     yield from sorted(home.glob(".hermes/profiles/*/skills/productivity/ppt-master/scripts"))
     for rel in ("ppt-master", "tools/ppt-master", "repos/ppt-master",
                 "src/ppt-master", "Documents/ppt-master", "Desktop/ppt-master"):
-        yield home / rel / "scripts"
+        root = home / rel
+        yield resolve_scripts_dir(root) or (root / "scripts")
     here = pathlib.Path(__file__).resolve().parent
-    yield here.parent / "ppt-master" / "scripts"
-    yield here.parent.parent / "ppt-master" / "scripts"
-    yield pathlib.Path.cwd() / "ppt-master" / "scripts"
+    for root in (here.parent / "ppt-master", here.parent.parent / "ppt-master",
+                 pathlib.Path.cwd() / "ppt-master"):
+        yield resolve_scripts_dir(root) or (root / "scripts")
 
 
 def _resolve_estimator():

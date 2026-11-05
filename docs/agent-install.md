@@ -28,14 +28,19 @@ python -m venv .venv
 ## 2. 装后端（推荐 PPT Master）
 
 ```bash
-git clone https://github.com/hugohe3/ppt-master   # 放本机任意位置
+git clone https://github.com/hugohe3/ppt-master   # 放本机任意位置，必须完整 clone
 ```
+
+> **必须完整 clone，不要只拷 `scripts/`**：新版 ppt-master 带归属完整性校验
+> （`attribution_guard`），缺 `SKILL.md` / `SPONSORS*.md` / `references/` 会直接拒绝运行
+> （exit 78，`skill integrity check failed`）。`PPTMASTER_DIR` 指向仓库根即可 ——
+> 驱动会自动在 `<根>/scripts/` 与 `<根>/skills/ppt-master/scripts/` 之间找到脚本。
 
 给 agent 的运行环境设变量：
 
 | 变量 | 指向 | 必需 |
 |---|---|---|
-| `PPTMASTER_DIR` | ppt-master 根目录（须含 `scripts/svg_quality_checker.py`） | 是（或能被自动发现） |
+| `PPTMASTER_DIR` | ppt-master **仓库根**（两种布局都认：旧版 `<根>/scripts/`，新版 `<根>/skills/ppt-master/scripts/`） | 是（或能被自动发现） |
 | `SKILL_SCRIPTS_DIR` | 它的 `scripts/` 目录（`kit.py` 取宽度估算器） | 否，缺省从 `PPTMASTER_DIR` 推导 |
 
 自动发现顺序（无需设变量时可以命中）：`$SKILL_SCRIPTS_DIR` → `$PPTMASTER_DIR/scripts`

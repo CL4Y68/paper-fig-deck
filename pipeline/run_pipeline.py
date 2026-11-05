@@ -65,21 +65,28 @@ PY = sys.executable          # must be a venv python with requirements.txt insta
 
 
 # --------------------------------------------------------------- environment
-def find_pptmaster() -> pathlib.Path:
-    """Root of the ppt-master install (the dir holding scripts/)."""
+def find_scripts_dir() -> pathlib.Path:
+    """The ppt-master scripts/ dir.
+
+    Both layouts resolve: an older install keeps `<root>/scripts/`, current
+    releases nest it under `<root>/skills/ppt-master/scripts/`.
+    """
     env = os.environ.get("PPTMASTER_DIR")
     if env:
-        root = pathlib.Path(env)
-        if (root / "scripts" / "svg_quality_checker.py").exists():
-            return root
-        raise SystemExit(f"PPTMASTER_DIR={env} lacks scripts/svg_quality_checker.py")
+        found = kit.resolve_scripts_dir(pathlib.Path(env))
+        if found:
+            return found
+        raise SystemExit(
+            f"PPTMASTER_DIR={env} has no scripts/svg_quality_checker.py "
+            "(looked at <dir>/scripts and <dir>/skills/ppt-master/scripts). "
+            "Point it at the cloned repository root: git clone "
+            "https://github.com/hugohe3/ppt-master")
     for scripts in kit._candidate_script_dirs():
         if (scripts / "svg_quality_checker.py").exists():
-            return scripts.parent
+            return scripts
     raise SystemExit(
-        "ppt-master scripts root not found. Set PPTMASTER_DIR to a directory "
-        "containing scripts/svg_quality_checker.py (git clone "
-        "https://github.com/hugohe3/ppt-master).")
+        "ppt-master scripts dir not found. Set PPTMASTER_DIR to the cloned "
+        "repository root (git clone https://github.com/hugohe3/ppt-master).")
 
 
 # ------------------------------------------------------------------- helpers
@@ -106,13 +113,16 @@ def has_native_tables(content: dict) -> bool:
     return any(f.get("kind") == "table" for f in content.get("figures", []))
 
 
-def _init_project_paths(pptmaster: pathlib.Path, prefix: str, name: str) -> list[str]:
-    """Every place ppt-master may have put the new project, most likely first."""
-    candidates = [
-        pptmaster.parent / "projects",          # <install>/../projects
-        pptmaster.parent.parent / "projects",   # <profile>/skills/projects
-        pathlib.Path.cwd() / "projects",
-    ]
+def _init_project_paths(scripts: pathlib.Path, prefix: str, name: str) -> list[str]:
+    """Every place ppt-master may have put the new project, most likely first.
+
+    `scripts` is the scripts/ dir, so `<scripts>.parent` is the skill root (old
+    layout) or `<repo>/skills/ppt-master` (current layout) and the repo/projects
+    dir sits up to three levels above it.
+    """
+    roots = [scripts.parent, scripts.parent.parent, scripts.parent.parent.parent,
+             pathlib.Path.cwd()]
+    candidates = [root / "projects" for root in roots]
     out = []
     for root in candidates:
         if root.is_dir():
@@ -137,7 +147,7 @@ def _is_version_controlled(path: pathlib.Path) -> bool:
     return r.returncode == 0
 
 
-def _today_project(pptmaster: pathlib.Path, prefix: str, name: str,
+def _today_project(scripts: pathlib.Path, prefix: str, name: str,
                    tag: str) -> pathlib.Path | None:
     """Today's project for this workdir, when one already exists.
 
@@ -146,7 +156,7 @@ def _today_project(pptmaster: pathlib.Path, prefix: str, name: str,
     clash instead of regenerating into the directory it already built.
     """
     want = f"{prefix}-{name}_ppt169_{tag}"
-    hits = [pathlib.Path(p) for p in _init_project_paths(pptmaster, prefix, name)]
+    hits = [pathlib.Path(p) for p in _init_project_paths(scripts, prefix, name)]
     hits = [p for p in hits if p.name.startswith(want) and (p / "svg_output").is_dir()]
     if not hits:
         return None
@@ -165,7 +175,7 @@ def _store_project(content_path: pathlib.Path, content: dict, proj: pathlib.Path
 
 
 def ensure_project(content_path: pathlib.Path, wd: pathlib.Path,
-                   pptmaster: pathlib.Path) -> pathlib.Path:
+                   scripts: pathlib.Path) -> pathlib.Path:
     """Return the project dir, re-initialising it when the stored path is gone."""
     content = json.loads(content_path.read_text(encoding="utf-8"))
     stored = content["paper"].get("ppt_project", "")
@@ -175,11 +185,11 @@ def ensure_project(content_path: pathlib.Path, wd: pathlib.Path,
 
     prefix = content["paper"].get("project_prefix", "figdeck")
     tag = datetime.date.today().strftime("%Y%m%d")
-    proj = _today_project(pptmaster, prefix, wd.name, tag)
+    proj = _today_project(scripts, prefix, wd.name, tag)
     if proj is not None:
         print(f"  reusing today's project for this workdir: {proj}")
     else:
-        r = run([PY, pptmaster / "scripts" / "project_manager.py", "init",
+        r = run([PY, scripts / "project_manager.py", "init",
                  f"{prefix}-{wd.name}_ppt169_{tag}", "--format", "ppt169",
                  "--quick-generate"], quiet=True)
 
@@ -192,11 +202,11 @@ def ensure_project(content_path: pathlib.Path, wd: pathlib.Path,
                     proj = candidate
                     break
         if proj is None:
-            found = _init_project_paths(pptmaster, prefix, wd.name)
+            found = _init_project_paths(scripts, prefix, wd.name)
             if not found:
                 raise SystemExit(
                     "project_manager init did not create a project dir; looked "
-                    f"under {[str(p) for p in (pptmaster.parent, pptmaster.parent.parent)]}")
+                    f"under {[str(p) for p in (scripts.parent, scripts.parent.parent)]}")
             proj = pathlib.Path(max(found, key=lambda p: pathlib.Path(p).stat().st_mtime))
 
     _store_project(content_path, content, proj)
@@ -290,15 +300,14 @@ def main(argv: list[str] | None = None) -> int:
               "           the approximate width model was used and no gate/export ran.")
         return 0
 
-    pptmaster = find_pptmaster()
-    SK = pptmaster / "scripts"
+    SK = find_scripts_dir()
     native = has_native_tables(content)
 
     # 1) project ------------------------------------------------------------
     if args.project_dir:
         proj = pathlib.Path(args.project_dir)
     else:
-        proj = ensure_project(content_path, wd, pptmaster)
+        proj = ensure_project(content_path, wd, SK)
     print(f"[1/9] project -> {proj}")
 
     # 2) notes hygiene ------------------------------------------------------
