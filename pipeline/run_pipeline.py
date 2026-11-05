@@ -19,7 +19,8 @@ Steps (the ordering footguns used to be tribal knowledge):
   0. validate content.json (content_schema) and fail fast, naming the bad field
   1. project lookup via content.json[paper][ppt_project]; auto-init
      (project_manager.py) when the dated project dir is gone, and write the
-     fresh path back into content.json
+     fresh path back into content.json — unless that file is tracked by git,
+     in which case the writeback is skipped so no local path enters the repo
   2. rm notes/*.md BEFORE total_md_split (its 1:1 check counts stale orphans)
   3. gen_all -> gen_notes -> total_md_split -> compact styles -> compact coords
   4. native-table projects (any kind=="table" figure spec) get
@@ -119,6 +120,50 @@ def _init_project_paths(pptmaster: pathlib.Path, prefix: str, name: str) -> list
     return out
 
 
+def _is_version_controlled(path: pathlib.Path) -> bool:
+    """True when `path` is tracked by a git repo (e.g. the bundled sample).
+
+    Writing the absolute project path back into a tracked content.json would be
+    a leak: a machine-specific path (and a whole-file reformat) lands in the
+    commit, and the deck then points at a directory that only exists on the
+    machine that built it. Untracked per-paper workdirs still get the writeback.
+    """
+    try:
+        r = subprocess.run(["git", "-C", str(path.parent), "ls-files",
+                            "--error-unmatch", path.name],
+                           capture_output=True, text=True, timeout=15)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return r.returncode == 0
+
+
+def _today_project(pptmaster: pathlib.Path, prefix: str, name: str,
+                   tag: str) -> pathlib.Path | None:
+    """Today's project for this workdir, when one already exists.
+
+    A tracked content.json never caches the path (_is_version_controlled), so a
+    second run on the same day would otherwise die on project_manager's name
+    clash instead of regenerating into the directory it already built.
+    """
+    want = f"{prefix}-{name}_ppt169_{tag}"
+    hits = [pathlib.Path(p) for p in _init_project_paths(pptmaster, prefix, name)]
+    hits = [p for p in hits if p.name.startswith(want) and (p / "svg_output").is_dir()]
+    if not hits:
+        return None
+    return max(hits, key=lambda p: p.stat().st_mtime)
+
+
+def _store_project(content_path: pathlib.Path, content: dict, proj: pathlib.Path) -> None:
+    """Cache the project path in the workdir - never in a version-controlled file."""
+    content["paper"]["ppt_project"] = str(proj)
+    if _is_version_controlled(content_path):
+        print("  content.json is tracked by git: ppt_project writeback skipped "
+              f"(kept the repo free of local paths); project for this run = {proj}")
+        return
+    content_path.write_text(json.dumps(content, ensure_ascii=False, indent=1),
+                            encoding="utf-8")
+
+
 def ensure_project(content_path: pathlib.Path, wd: pathlib.Path,
                    pptmaster: pathlib.Path) -> pathlib.Path:
     """Return the project dir, re-initialising it when the stored path is gone."""
@@ -130,30 +175,31 @@ def ensure_project(content_path: pathlib.Path, wd: pathlib.Path,
 
     prefix = content["paper"].get("project_prefix", "figdeck")
     tag = datetime.date.today().strftime("%Y%m%d")
-    r = run([PY, pptmaster / "scripts" / "project_manager.py", "init",
-             f"{prefix}-{wd.name}_ppt169_{tag}", "--format", "ppt169",
-             "--quick-generate"], quiet=True)
+    proj = _today_project(pptmaster, prefix, wd.name, tag)
+    if proj is not None:
+        print(f"  reusing today's project for this workdir: {proj}")
+    else:
+        r = run([PY, pptmaster / "scripts" / "project_manager.py", "init",
+                 f"{prefix}-{wd.name}_ppt169_{tag}", "--format", "ppt169",
+                 "--quick-generate"], quiet=True)
 
-    # The project root is install-dependent (ppt-master derives it from its own
-    # module path), so trust the path the tool prints, then fall back to a scan.
-    proj = None
-    for line in r.stdout.splitlines():
-        if line.startswith("Project created:"):
-            candidate = pathlib.Path(line.split(":", 1)[1].strip())
-            if candidate.is_dir():
-                proj = candidate
-                break
-    if proj is None:
-        found = _init_project_paths(pptmaster, prefix, wd.name)
-        if not found:
-            raise SystemExit(
-                "project_manager init did not create a project dir; "
-                f"looked under {[str(p) for p in (pptmaster.parent, pptmaster.parent.parent)]}")
-        proj = pathlib.Path(max(found, key=lambda p: pathlib.Path(p).stat().st_mtime))
+        # The project root is install-dependent (ppt-master derives it from its
+        # own module path), so trust the path the tool prints, then scan.
+        for line in r.stdout.splitlines():
+            if line.startswith("Project created:"):
+                candidate = pathlib.Path(line.split(":", 1)[1].strip())
+                if candidate.is_dir():
+                    proj = candidate
+                    break
+        if proj is None:
+            found = _init_project_paths(pptmaster, prefix, wd.name)
+            if not found:
+                raise SystemExit(
+                    "project_manager init did not create a project dir; looked "
+                    f"under {[str(p) for p in (pptmaster.parent, pptmaster.parent.parent)]}")
+            proj = pathlib.Path(max(found, key=lambda p: pathlib.Path(p).stat().st_mtime))
 
-    content["paper"]["ppt_project"] = str(proj)
-    content_path.write_text(json.dumps(content, ensure_ascii=False, indent=1),
-                            encoding="utf-8")
+    _store_project(content_path, content, proj)
     return proj
 
 
