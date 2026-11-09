@@ -49,8 +49,11 @@ Python 流水线**（gated SVG → 可编辑 18pt+ PPTX + 逐页讲稿）。本�
    状态写 `<manifest 同目录>/batch_state.json`，中断后原样重跑，已完成自动跳过。
 
 3. **验收**：日志尾部必须出现 `VERIFY slides=N notes=N overflow=0` 且
-   slides == notes；主线总览页 / 长正文页把该页 SVG 包一层 HTML，用浏览器
-   CDP 截图亲眼看一次（重叠 / 截断 / 对齐）。
+   slides == notes；再做一次像素级 QA（门禁只证明坐标合法，不证明渲染无重叠）：
+   `<repo>/pipeline/qa_snapshots.py make <project>` 包装关键页（封面 / 总览 /
+   首末图 / 结论），用浏览器工具把每个 `.qa.html` 截图存为 `<project>/qa/<slug>.png`，
+   再 `qa_snapshots.py assemble <project>` 拼成 `qa/sheet.png` 做**一次**视觉检查
+   （重叠 / 截断 / 对齐；蓝色标签行是拼图 chrome，忽略；全图同色 = 截图失效，重截）。
 
 ## 硬规则（违反 = 废品）
 

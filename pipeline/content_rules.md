@@ -145,6 +145,8 @@ Every single-paper deck carries the same five gold labels, in this order:
   two into "本文方案 / 关键证据 / 结论" is an **error**, not a style choice — line 3
   is what makes the paper's gap visible, and line 5 is what the figure pages then
   cash in.
-- Budget per line ~70–110 CJK chars; the whole page must stay ≤14 rendered lines
-  (full width 1184 px, first-line indent 48 px, leading 36 px, top y=168).
-  Size the copy before building: the deck asserts the line count.
+- Budget: five paragraphs INCLUDING the five gold labels total ≤ ~450 CJK chars
+  (per paragraph 80–95; the earlier "~70–110 per line" wording overflows — 5×100
+  already renders ~16+ lines against the 14-line cap). Size the copy before
+  building and cut the longest paragraph first; the deck's intro assert is
+  non-negotiable and a violated run wastes a full generation pass.
